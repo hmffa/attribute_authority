@@ -1,0 +1,11 @@
+Click==7.1.2
+fastapi==0.116.1
+flaat
+SQLAlchemy==2.0.*
+psycopg2-binary==2.9.*
+asyncpg==0.30.*
+pydantic==2.11.*
+pydantic-settings==2.10.*
+email_validator==2.2.*
+uvicorn==0.35.*
+alembic==1.16.*

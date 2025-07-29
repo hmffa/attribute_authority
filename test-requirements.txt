@@ -1,0 +1,6 @@
+python-dotenv
+pytest
+pytest-asyncio
+pytest-cov
+pylint-pytest
+coverage-badge

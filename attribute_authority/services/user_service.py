@@ -7,7 +7,7 @@ from ..schemas.user import User as UserSchema
 
 class UserService:
     @staticmethod
-    async def get_user_by_sub(db: AsyncSession, sub: str, iss: str) -> UserSchema:
+    async def get_user(db: AsyncSession, sub: str, iss: str) -> UserSchema:
         """
         Get user information by subject identifier (sub) and issuer (iss).
         """
@@ -26,17 +26,8 @@ class UserService:
         """
         sub = claims.get("sub")
         iss = claims.get("iss")
-        user = await UserService.get_user_by_sub(db, sub, iss)
+        user = await UserService.get_user(db, sub, iss)
 
-        return {
-            "sub": user.sub,
-            "email": user.email,
-            "email_verified": user.email_verified,
-            "name": user.name,
-            "given_name": user.given_name,
-            "family_name": user.family_name,
-            "preferred_username": user.preferred_username,
-            "picture": user.picture,
-        }
+        return user.entitlements if user.entitlements else {}
 
 user_service = UserService()

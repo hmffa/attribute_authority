@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 from ..core.config import settings
 
-sqlalchemy_database_uri = str(settings.SQLALCHEMY_DATABASE_URI)
+sqlalchemy_database_uri = settings.SQLALCHEMY_DATABASE_URI
 print(f"Using SQLAlchemy database URI: {sqlalchemy_database_uri}")
 
 engine = create_engine(

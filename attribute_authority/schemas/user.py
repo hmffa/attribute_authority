@@ -1,69 +1,45 @@
-from typing import Optional, List
-from pydantic import BaseModel, EmailStr
-from datetime import date
+from typing import List, Optional
+from pydantic import BaseModel, Field, validator
 
-class UserAffiliationBase(BaseModel):
-    affiliation: str
-
-class UserAffiliation(UserAffiliationBase):
-    id: int
-    user_id: int
-    
-    class Config:
-        from_attributes = True
-
-class UserGroupBase(BaseModel):
-    group_name: str
-
-class UserGroup(UserGroupBase):
-    id: int
-    user_id: int
-    
-    class Config:
-        from_attributes = True
 
 class UserBase(BaseModel):
-    email: Optional[EmailStr] = None
-    email_verified: Optional[bool] = None
-    name: Optional[str] = None
-    given_name: Optional[str] = None
-    family_name: Optional[str] = None
-    preferred_username: Optional[str] = None
-    picture: Optional[str] = None
-    display_name: Optional[str] = None
-    
-    # New fields
-    bw_card_number: Optional[str] = None
-    bw_card_valid_to: Optional[date] = None
-    bw_card_uid: Optional[str] = None
-    ou: Optional[str] = None
-    upn: Optional[str] = None
-    eduperson_principal_name: Optional[str] = None
+    """Base schema with shared User attributes"""
+    sub: str = Field(..., description="Subject identifier", max_length=255)
+    iss: str = Field(..., description="Issuer identifier", max_length=255)
+    entitlements: Optional[List[str]] = Field(
+        None,
+        description="List of user entitlements (e.g. URNs)"
+    )
+
 
 class UserCreate(UserBase):
-    sub: str
-    iss: str
-    email: EmailStr
-
-class UserUpdate(UserBase):
+    """Schema for user creation"""
     pass
 
+
+class UserUpdate(BaseModel):
+    """Schema for user updates"""
+    sub: Optional[str] = Field(None, description="Subject identifier", max_length=255)
+    iss: Optional[str] = Field(None, description="Issuer identifier", max_length=255)
+    entitlements: Optional[List[str]] = Field(
+        None,
+        description="List of user entitlements (e.g. URNs)"
+    )
+
+
 class UserInDBBase(UserBase):
+    """Base schema for User from DB"""
     id: int
-    sub: str
-    iss: str
-    
+
     class Config:
         from_attributes = True
 
+
 class User(UserInDBBase):
-    """User model returned to clients"""
-    affiliations: List[UserAffiliation] = []
-    groups: List[UserGroup] = []
+    """Schema for API responses"""
+    pass
+
 
 class UserInDB(UserInDBBase):
-    """User model stored in DB with potential extra internal fields"""
-    created_at: str
-    updated_at: str
-    affiliations: List[UserAffiliation] = []
-    groups: List[UserGroup] = []
+    """Schema for internal use with additional fields"""
+    pass

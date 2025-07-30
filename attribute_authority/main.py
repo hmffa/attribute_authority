@@ -12,12 +12,14 @@ from alembic import command
 from .api import api_router
 from .core.config import settings
 from .core.logging_config import logger
-from .api.endpoints.userinfo import userinfo as versioned_userinfo
+from .api.endpoints.user_attributes import userattributes as versioned_userattributes
 from .api.dependencies import get_current_user_claims, get_db_dependency
+from .scripts.startup import insert_user_from_config
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME}")
+    # insert_user_from_config() # TODO populate DB from config automatically
     yield
     logger.info(f"Shutting down {settings.APP_NAME}")
 
@@ -25,6 +27,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    lifespan=lifespan,
 )
 
 # Set up CORS middleware
@@ -61,14 +64,14 @@ app.add_middleware(LoggingMiddleware)
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 # For backwards compatibility, include a non-versioned route as well
-@app.get("/userinfo")
-async def legacy_userinfo(response: Response, request: Request):
-    """Legacy userinfo endpoint for backward compatibility"""
-    
+@app.get("/userattributes")
+async def legacy_userattributes(response: Response, request: Request):
+    """Legacy userattributes endpoint for backward compatibility"""
+
     claims = await get_current_user_claims(request)
     db = await anext(get_db_dependency()())
-    
-    return await versioned_userinfo(request, claims, db)
+
+    return await versioned_userattributes(request, claims, db)
 
 @app.get("/")
 async def root():

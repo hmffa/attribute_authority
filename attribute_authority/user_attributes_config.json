@@ -1,0 +1,13 @@
+{
+  "sub": "01c7df72-e1d2-4062-a88d-f75a1955c846",
+  "iss": "https://login-dev.helmholtz.de/oauth2",
+  "entitlements": {
+    "eduperson_entitlement": [
+      "urn:mace:dir:entitlement:common-lib-terms",
+      "http://bwidm.de/entitlement/bwLSDF-SyncShare",
+      "urn:geant:helmholtz.de:group:KIT#login-dev.helmholtz.de",
+      "urn:geant:helmholtz.de:group:Helmholtz-all#login-dev.helmholtz.de",
+      "urn:geant:helmholtz.de:group:Helmholtz-member#login-dev.helmholtz.de"
+    ]
+  }
+}

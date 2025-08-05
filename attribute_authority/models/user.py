@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import relationship
 
 from ..db.base_class import Base
 
@@ -9,8 +9,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     sub = Column(String(255), index=True)
     iss = Column(String(255), index=True)
-    attributes = Column(JSONB, nullable=True)
     created_at = Column(String(50), nullable=False)
     updated_at = Column(String(50), nullable=False)
 
-
+    attributes = relationship("UserAttribute", back_populates="user", cascade="all, delete-orphan")

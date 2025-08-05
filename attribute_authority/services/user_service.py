@@ -28,6 +28,6 @@ class UserService:
         iss = claims.get("iss")
         user = await UserService.get_user(db, sub, iss)
 
-        return user.entitlements if user.entitlements else {}
+        return user.attributes if user.attributes else {}
 
 user_service = UserService()

@@ -1,5 +1,6 @@
 from typing import Dict, Any
 from flaat.fastapi import Flaat
+from flaat import access_tokens
 from fastapi import Request, HTTPException, status
 from .config import settings
 from .logging_config import logger
@@ -24,9 +25,12 @@ async def validate_token(request: Request) -> Dict[str, Any]:
         )
     access_token = auth_header[len("Bearer "):]
 
+    # Extract info from access token
+    token_info = access_tokens.get_access_token_info(access_token, verify=False) # TODO Access token verification disabled for now
+
     # Get user infos from access token
-    user_infos = flaat.get_user_infos_from_access_token(access_token)
-    if not user_infos:
+    # user_infos = flaat.get_user_infos_from_access_token(access_token)
+    if not token_info:
         logger.warning("Invalid token or token expired")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -35,12 +39,12 @@ async def validate_token(request: Request) -> Dict[str, Any]:
         )
 
     # Get user subject identifier
-    sub = user_infos.subject
+    sub = token_info.body.get("sub")
     if not sub:
         logger.warning("Token does not contain subject identifier")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token does not contain subject identifier",
         )
-    
-    return user_infos.user_info  # Return the user info dictionary
+
+    return token_info.body  # Return the user info dictionary

@@ -1,6 +1,7 @@
 import json
 import os
 from sqlalchemy.orm import Session
+import datetime
 
 from ..models.user import User
 from ..db.session import SessionLocal
@@ -9,19 +10,27 @@ from ..db.session import get_db
 
 def insert_user_from_config(config_path="../user_attributes_config.json", db: Session = next(get_db())):
     try:
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         with open(config_path, "r") as f:
-            data = json.load(f)
-        print(f"Inserting user from config: {data}")
-        # Check if user already exists
-        user = db.query(User).filter_by(sub=data["sub"], iss=data["iss"]).first()
-        if not user:
-            user = User(
-                sub=data["sub"],
-                iss=data["iss"],
-                entitlements=json.dumps(data["entitlements"])  # Serialize entitlements to JSON string
-            )
-            db.add(user)
-            db.commit()
+            users = json.load(f)
+        print(f"Inserting user from config: {users}")
+        for data in users:
+            # Check if user already exists
+            user = db.query(User).filter_by(sub=data["sub"], iss=data["iss"]).first()
+            if not user:
+                user = User(
+                    sub=data["sub"],
+                    iss=data["iss"],
+                    attributes=json.dumps(data["attributes"]),  # Serialize attributes to JSON string
+                    created_at=now,
+                    updated_at=now
+                )
+                db.add(user)
+            else:
+                logger.info(f"User with sub {data['sub']} already exists, updating insertion.")
+                user.attributes = json.dumps(data["attributes"])
+                user.updated_at = now
+        db.commit()
         db.close()
     except Exception as e:
         logger.error(f"Error inserting user from config: {e}")

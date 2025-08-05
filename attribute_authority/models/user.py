@@ -9,6 +9,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     sub = Column(String(255), index=True)
     iss = Column(String(255), index=True)
-    entitlements = Column(JSONB, nullable=True)
+    attributes = Column(JSONB, nullable=True)
+    created_at = Column(String(50), nullable=False)
+    updated_at = Column(String(50), nullable=False)
 
 

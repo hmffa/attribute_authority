@@ -15,14 +15,6 @@ class CRUDUser:
         result = await db.execute(query)
         return result.scalars().first()
 
-    @staticmethod
-    async def get_by_email(db: AsyncSession, email: str) -> Optional[User]:
-        """
-        Get a user by email
-        """
-        query = select(User).where(User.email == email)
-        result = await db.execute(query)
-        return result.scalars().first()
 
     @staticmethod
     async def create(db: AsyncSession, obj_in: UserCreate) -> User:
@@ -34,13 +26,7 @@ class CRUDUser:
 
         db_obj = User(
             sub=obj_in.sub,
-            email=obj_in.email,
-            email_verified=obj_in.email_verified or False,
             name=obj_in.name,
-            given_name=obj_in.given_name,
-            family_name=obj_in.family_name,
-            preferred_username=obj_in.preferred_username,
-            picture=obj_in.picture,
             created_at=now,
             updated_at=now,
         )

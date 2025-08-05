@@ -6,9 +6,9 @@ class UserBase(BaseModel):
     """Base schema with shared User attributes"""
     sub: str = Field(..., description="Subject identifier", max_length=255)
     iss: str = Field(..., description="Issuer identifier", max_length=255)
-    entitlements: Optional[List[str]] = Field(
+    attributes: Optional[List[str]] = Field(
         None,
-        description="List of user entitlements (e.g. URNs)"
+        description="List of user attributes (e.g. URNs)"
     )
 
 

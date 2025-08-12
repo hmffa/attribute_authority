@@ -27,22 +27,22 @@ class Settings(BaseSettings):
     
     @field_validator("SQLALCHEMY_DATABASE_URI", mode="before")
     def assemble_db_connection(cls, v: Optional[str], info: ValidationInfo) -> Any: # pylint: disable=no-self-argument
-        if not v.strip():
-            v = None
-        elif isinstance(v, str):
+        if isinstance(v, str) and v.strip():
             return v
-        
+
         # Convert port to integer
         port_str = info.data.get("POSTGRES_PORT")
         port = int(port_str) if port_str else None
-        
+        dbname = info.data.get("POSTGRES_DB") or ''
+        path = f"/{dbname}" if dbname else ""
+
         return str(PostgresDsn.build(
             scheme="postgresql",
             username=info.data.get("POSTGRES_USER"),
             password=info.data.get("POSTGRES_PASSWORD"),
             host=info.data.get("POSTGRES_SERVER"),
             port=port,
-            path=f"{info.data.get('POSTGRES_DB') or ''}",
+            path=path,
         ))
     
     # OIDC Configuration

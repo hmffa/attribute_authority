@@ -28,7 +28,7 @@ class LogConfig(BaseModel):
         },
     }
     loggers: Dict[str, Dict[str, Any]] = {
-        "userinfo_api": {"handlers": ["default"], "level": LOG_LEVEL},
+        "attribute_authority_api": {"handlers": ["default"], "level": LOG_LEVEL},
     }
 
 # Configure logging

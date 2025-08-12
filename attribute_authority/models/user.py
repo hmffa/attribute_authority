@@ -10,6 +10,5 @@ class User(Base):
     sub = Column(String(255), index=True)
     iss = Column(String(255), index=True)
     created_at = Column(String(50), nullable=False)
-    updated_at = Column(String(50), nullable=False)
 
     attributes = relationship("UserAttribute", back_populates="user", cascade="all, delete-orphan")

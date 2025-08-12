@@ -10,5 +10,6 @@ class UserAttribute(Base):
     user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
     key = Column(String(1024), nullable=False)
     value = Column(String(1024), nullable=False)
+    created_at = Column(String(50), nullable=False)
 
     user = relationship("User", back_populates="attributes")

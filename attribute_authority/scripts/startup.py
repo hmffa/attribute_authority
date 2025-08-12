@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import datetime
 
 from ..models.user import User
+from ..models.user_attribute import UserAttribute
 from ..db.session import SessionLocal
 from ..core.logging_config import logger
 from ..db.session import get_db
@@ -21,15 +22,33 @@ def insert_user_from_config(config_path="../user_attributes_config.json", db: Se
                 user = User(
                     sub=data["sub"],
                     iss=data["iss"],
-                    attributes=json.dumps(data["attributes"]),  # Serialize attributes to JSON string
-                    created_at=now,
-                    updated_at=now
+                    created_at=now
                 )
                 db.add(user)
+                db.flush()
             else:
-                logger.info(f"User with sub {data['sub']} already exists, updating insertion.")
-                user.attributes = json.dumps(data["attributes"])
-                user.updated_at = now
+                logger.info(f"User with sub {data['sub']} already exists, skipping creation.")
+    
+            for key, values in data.items():
+                if key in ["sub", "iss"]:
+                    continue
+                if isinstance(values, list):
+                    for value in values:
+                        attribute = UserAttribute(
+                            user_id=user.id,
+                            key=key,
+                            value=str(value),
+                            created_at=now
+                        )
+                        db.add(attribute)
+                else:
+                    attribute = UserAttribute(
+                        user_id=user.id,
+                        key=key,
+                        value=str(values),
+                        created_at=now
+                    )
+                    db.add(attribute)
         db.commit()
         db.close()
     except Exception as e:

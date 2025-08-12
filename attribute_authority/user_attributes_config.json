@@ -2,39 +2,34 @@
   {
     "sub": "01c7df72-e1d2-4062-a88d-f75a1955c846",
     "iss": "https://login-dev.helmholtz.de/oauth2",
-    "attributes": {
-      "entitlements": [
-          "urn:mace:dir:entitlement:common-lib-terms",
-          "http://bwidm.de/entitlement/bwLSDF-SyncShare",
-          "urn:geant:helmholtz.de:group:KIT#login-dev.helmholtz.de",
-          "urn:geant:helmholtz.de:group:Helmholtz-all#login-dev.helmholtz.de",
-          "urn:geant:helmholtz.de:group:Helmholtz-member#login-dev.helmholtz.de"
-        ],
-      "eduperson_assurance": [
-        "https://refeds.org/assurance",
-        "https://refeds.org/assurance/ID/unique",
-        "https://refeds.org/assurance/ID/eppn-unique-no-reassign",
-        "https://refeds.org/assurance/ATP/ePA-1d",
-        "https://refeds.org/assurance/ATP/ePA-1m",
-        "https://refeds.org/assurance/IAP/local-enterprise",
-        "https://refeds.org/assurance/IAP/low",
-        "https://refeds.org/assurance/IAP/medium",
-        "https://refeds.org/assurance/profile/cappuccino",
-        "https://aarc-project.eu/policy/authn-assurance/assam"
-      ]
-      }
+    "entitlements": [
+        "urn:mace:dir:entitlement:common-lib-terms",
+        "http://bwidm.de/entitlement/bwLSDF-SyncShare",
+        "urn:geant:helmholtz.de:group:KIT#login-dev.helmholtz.de",
+        "urn:geant:helmholtz.de:group:Helmholtz-all#login-dev.helmholtz.de",
+        "urn:geant:helmholtz.de:group:Helmholtz-member#login-dev.helmholtz.de"
+      ],
+    "eduperson_assurance": [
+      "https://refeds.org/assurance",
+      "https://refeds.org/assurance/ID/unique",
+      "https://refeds.org/assurance/ID/eppn-unique-no-reassign",
+      "https://refeds.org/assurance/ATP/ePA-1d",
+      "https://refeds.org/assurance/ATP/ePA-1m",
+      "https://refeds.org/assurance/IAP/local-enterprise",
+      "https://refeds.org/assurance/IAP/low",
+      "https://refeds.org/assurance/IAP/medium",
+      "https://refeds.org/assurance/profile/cappuccino",
+      "https://aarc-project.eu/policy/authn-assurance/assam"
+    ]
   },
 
   {
     "sub": "6c611e2a-2c1c-487f-9948-c058a36c8f0e",
     "iss": "https://login-dev.helmholtz.de/oauth2",
-    "attributes": {
-      "edu_entitlements": [
-        "urn:geant:amin-attra:group:m-team",
-        "urn:geant:amin-attra:group:m-team:ai",
-        "urn:geant:amin-attra:resource:compute-cluster"
-      ]
-    }
-    
+    "edu_entitlements": [
+      "urn:geant:amin-attra:group:m-team",
+      "urn:geant:amin-attra:group:m-team:ai",
+      "urn:geant:amin-attra:resource:compute-cluster"
+    ]
   }
 ]

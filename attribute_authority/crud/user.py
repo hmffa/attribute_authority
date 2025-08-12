@@ -1,6 +1,7 @@
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+import datetime
 
 from ..models.user import User
 from ..schemas.user import UserCreate, UserUpdate
@@ -21,12 +22,10 @@ class CRUDUser:
         """
         Create a new user
         """
-        import datetime
         now = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
         db_obj = User(
             sub=obj_in.sub,
-            name=obj_in.name,
             created_at=now,
             updated_at=now,
         )
@@ -41,11 +40,10 @@ class CRUDUser:
         Update a user
         """
         update_data = obj_in.model_dump(exclude_unset=True)
-        import datetime
-        update_data["updated_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
         for field, value in update_data.items():
-            setattr(db_obj, field, value)
+            if hasattr(db_obj, field):
+                setattr(db_obj, field, value)
             
         await db.commit()
         await db.refresh(db_obj)

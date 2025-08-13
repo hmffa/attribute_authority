@@ -8,7 +8,7 @@ from ..core.config import settings
 class LogConfig(BaseModel):
     """Logging configuration"""
     LOGGER_NAME: str = "attribute_authority_api"
-    LOG_FORMAT: str = "%(levelprefix)s | %(asctime)s | %(message)s"
+    LOG_FORMAT: str = "%(levelname)s | %(asctime)s | %(message)s"
     LOG_LEVEL: str = getattr(settings, "LOG_LEVEL", "INFO")
 
     # Configure logging settings

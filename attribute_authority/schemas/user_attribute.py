@@ -1,3 +1,4 @@
+from typing import List
 from pydantic import BaseModel, Field
 
 class UserAttributeBase(BaseModel):
@@ -6,6 +7,8 @@ class UserAttributeBase(BaseModel):
 
 class UserAttributeCreate(UserAttributeBase):
     user_id: int = Field(..., description="User ID")
+    key: str = Field(..., description="Attribute key", max_length=1024)
+    value: str = Field(..., description="Attribute value", max_length=1024)
 
 class UserAttribute(UserAttributeBase):
     id: int
@@ -13,3 +16,6 @@ class UserAttribute(UserAttributeBase):
 
     class Config:
         from_attributes = True
+
+class AttributeMutation(BaseModel):
+    values: List[str]

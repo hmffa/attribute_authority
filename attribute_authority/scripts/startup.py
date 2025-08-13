@@ -5,7 +5,6 @@ import datetime
 
 from ..models.user import User
 from ..models.user_attribute import UserAttribute
-from ..db.session import SessionLocal
 from ..core.logging_config import logger
 from ..db.session import get_db
 

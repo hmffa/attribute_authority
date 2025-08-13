@@ -34,7 +34,7 @@ class Settings(BaseSettings):
         port_str = info.data.get("POSTGRES_PORT")
         port = int(port_str) if port_str else None
         dbname = info.data.get("POSTGRES_DB") or ''
-        path = f"/{dbname}" if dbname else ""
+        path = f"{dbname}" if dbname else ""
 
         return str(PostgresDsn.build(
             scheme="postgresql",

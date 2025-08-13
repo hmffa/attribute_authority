@@ -1,6 +1,7 @@
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+import datetime
 
 from ..models.user_attribute import UserAttribute
 from ..schemas.user_attribute import UserAttributeCreate
@@ -23,5 +24,18 @@ class CRUDUserAttribute:
         query = select(UserAttribute).where(UserAttribute.user_id == user_id, UserAttribute.key == key)
         result = await db.execute(query)
         return result.scalars().all()
+
+    @staticmethod
+    async def create(db: AsyncSession, obj_in: UserAttributeCreate) -> UserAttribute:
+        """
+        Create a new user attribute.
+        """
+        data = obj_in.model_dump()
+        data['created_at'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        db_obj = UserAttribute(**data)
+        db.add(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
+        return db_obj
 
 crud_user_attribute = CRUDUserAttribute()

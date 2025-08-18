@@ -33,9 +33,9 @@ async def set_attributes(
     desired = set(body.values)
 
     for v in desired - current:
-        await crud_user_attribute.add_value(db, user.id, key, v)
+        await crud_user_attribute.update(db, user.id, key, v)
     for v in current - desired:
-        await crud_user_attribute.remove_value(db, user.id, key, v)
+        await crud_user_attribute.delete(db, user.id, key, v)
 
     updated = await crud_user_attribute.get_by_user_id_and_key(db, user.id, key)
     return {key: [ua.value for ua in updated]}
@@ -57,9 +57,15 @@ async def add_attributes(
     if not user:
         user = await crud_user.create(db, UserCreate(sub=sub, iss=iss))
 
+    await db.refresh(user)
+
+    existing_attributes = await crud_user_attribute.get_by_user_id_and_key(db, user.id, key)
+    existing_values = {ua.value for ua in existing_attributes}
+
     for v in body.values:
-        user_attribute_create_obj = UserAttributeCreate(user_id=user.id, key=key, value=v)
-        await crud_user_attribute.create(db, obj_in=user_attribute_create_obj)
+        if v not in existing_values:
+            user_attribute_create_obj = UserAttributeCreate(user_id=user.id, key=key, value=v)
+            await crud_user_attribute.create(db, obj_in=user_attribute_create_obj)
 
     updated = await crud_user_attribute.get_by_user_id_and_key(db, user.id, key)
     return {key: [ua.value for ua in updated]}

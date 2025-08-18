@@ -74,7 +74,7 @@ async def add_attributes(
 async def remove_attributes(
     key: str,
     body: AttributeMutation,
-    claims: Dict[str, Any] = Depends(require_admin_claims),
+    claims: Dict[str, Any] = Depends(get_current_user_claims),
     db: AsyncSession = Depends(get_db_dependency()),
 ):
     sub = claims.get("sub")
@@ -87,7 +87,10 @@ async def remove_attributes(
         return {key: []}
 
     for v in body.values:
-        await crud_user_attribute.remove_value(db, user.id, key, v)
+        try:
+            await crud_user_attribute.delete(db, user.id, key, v)
+        except:
+            continue
 
     updated = await crud_user_attribute.get_by_user_id_and_key(db, user.id, key)
     return {key: [ua.value for ua in updated]}

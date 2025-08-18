@@ -28,13 +28,12 @@ class CRUDUserAttribute:
         return result.scalars().all()
 
     @staticmethod
-    async def create(db: AsyncSession, obj_in: UserAttributeCreate) -> UserAttribute:
+    async def create(db: AsyncSession, user_id: int, key: str, value: str) -> UserAttribute:
         """
         Create a new user attribute.
         """
-        data = obj_in.model_dump()
-        data['created_at'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        db_obj = UserAttribute(**data)
+        created_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        db_obj = UserAttribute(user_id=user_id, key=key, value=value, created_at=created_at)
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)

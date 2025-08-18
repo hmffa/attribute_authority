@@ -33,7 +33,7 @@ async def set_attributes(
     desired = set(body.values)
 
     for v in desired - current:
-        await crud_user_attribute.update(db, user.id, key, v)
+        await crud_user_attribute.create(db, user.id, key, v)
     for v in current - desired:
         await crud_user_attribute.delete(db, user.id, key, v)
 

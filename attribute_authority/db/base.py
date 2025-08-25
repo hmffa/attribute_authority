@@ -3,3 +3,4 @@
 from .base_class import Base  # noqa
 from ..models.user import User  # noqa
 from ..models.user_attribute import UserAttribute  # noqa
+from ..models.invitation import Invitation  # noqa

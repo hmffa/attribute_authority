@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Group Invitation</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; color: #333; }
+        .container { background: #fff; padding: 24px; border-radius: 8px; max-width: 600px; margin: 40px auto; box-shadow: 0 2px 8px rgba(0,0,0,0.05);}
+        .btn { display: inline-block; padding: 12px 24px; margin: 12px 8px 0 0; border-radius: 4px; text-decoration: none; font-weight: bold; }
+        .approve { background: #4CAF50; color: #fff; }
+        .reject { background: #f44336; color: #fff; }
+        .footer { margin-top: 32px; font-size: 0.9em; color: #888; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <p>Dear {{user_name}},</p>
+        <p>
+            You have been invited by <strong>{{admin_name}}</strong> to join the group <strong>{{group_name}}</strong> in the Attribute Authority system.
+        </p>
+        <p>
+            Please review the invitation and choose to approve or reject your membership:
+        </p>
+        <p>
+            <a href="{{approve_url}}" class="btn approve">Approve</a>
+            <a href="{{reject_url}}" class="btn reject">Reject</a>
+        </p>
+        <p>
+            If you have any questions, please contact your administrator.
+        </p>
+        <div class="footer">
+            This email was sent by Attribute Authority. If you did not expect this invitation, you can safely ignore this message.
+        </div>
+    </div>
+</body>
+</html>

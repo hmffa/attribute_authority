@@ -16,9 +16,7 @@ if config.config_file_name is not None:
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from attribute_authority.db.base_class import Base
-import attribute_authority.models.user
-import attribute_authority.models.user_attribute
+from attribute_authority.db.base import Base
 target_metadata = Base.metadata
 # target_metadata = None
 

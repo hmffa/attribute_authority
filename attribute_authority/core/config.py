@@ -57,6 +57,15 @@ class Settings(BaseSettings):
             return "INFO"
         return str(v).upper()
     
+    # Public-facing base URL for generated links
+    PUBLIC_BASE_URL: str = "http://localhost:8000" # TODO Update this part to base url accordingly
+
+    SMTP_MAIL_SERVER_USERNAME: str = ""
+    SMTP_MAIL_SERVER_PASSWORD: str = ""
+    SMTP_MAIL_SERVER: str = ""
+    SMTP_MAIL_SERVER_PORT: int = 587
+    SMTP_MAIL_SENDER: str = ""
+
     class Config:
         case_sensitive = True
         env_file = ".env"

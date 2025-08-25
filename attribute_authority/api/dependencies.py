@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Request, Depends, status
+from fastapi import HTTPException, Request, Depends, status, Form
 from typing import Dict, Any
 
 from ..db.session import get_async_db
@@ -22,3 +22,12 @@ def require_admin_claims(claims: Dict[str, Any] = Depends(get_current_user_claim
     if not claims.get("role") == "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     return claims
+
+async def optional_user_claims(request: Request):
+    """
+    Try to validate token but don't raise exception if not present
+    """
+    try:
+        return await validate_token(request)
+    except HTTPException:
+        return None

@@ -26,8 +26,8 @@ class CRUDUser:
 
         db_obj = User(
             sub=obj_in.sub,
+            iss=obj_in.iss,
             created_at=now,
-            updated_at=now,
         )
         db.add(db_obj)
         await db.commit()

@@ -31,29 +31,32 @@ class InvitationService:
         invitation = await crud_invitation.create(db, obj_in, user.id)
         
         # Generate invitation URL
-        approve_url = f"{settings.PUBLIC_BASE_URL}/api/v1/invitations/{invitation.hash}/accept"
-        reject_url = f"{settings.PUBLIC_BASE_URL}/api/v1/invitations/{invitation.hash}/reject"
+        # approve_url = f"{settings.PUBLIC_BASE_URL}/api/v1/invitations/{invitation.hash}/accept"
+        # reject_url = f"{settings.PUBLIC_BASE_URL}/api/v1/invitations/{invitation.hash}/reject"
+        invitation_url = f"{settings.PUBLIC_BASE_URL}/api/v1/invitations/{invitation.hash}"
 
-        context = {
-            "user_name": getattr(user, "name", "Sample User"),  # TODO add extra user information such as name, email, etc
-            "admin_name": "Admin",  # TODO Replace with actual admin name when there is a separate table for that
-            "group_name": invitation.group_value,
-            "approve_url": approve_url,
-            "reject_url": reject_url
-        }
-        template = render_template("user_invitation.html", context)
 
-        await send_invitation_email(
-            to= getattr(user, "email", "hmffam@gmail.com"), # TODO replace this when user table is updated
-            subject="Group Membership Request",
-            body=template
-        )
+        # NOTE Sending email notification feature is currently disabled
+
+        # context = {
+        #     "user_name": getattr(user, "name", "Sample User"),  # TODO add extra user information such as name, email, etc
+        #     "admin_name": "Admin",  # TODO Replace with actual admin name when there is a separate table for that
+        #     "group_name": invitation.group_value,
+        #     "approve_url": approve_url,
+        #     "reject_url": reject_url
+        # }
+        # template = render_template("user_invitation.html", context)
+
+        # await send_invitation_email(
+        #     to= getattr(user, "email", "hmffam@gmail.com"), # TODO replace this when user table is updated
+        #     subject="Group Membership Request",
+        #     body=template
+        # )
 
         return InvitationResponse(
             hash=invitation.hash,
-            approve_url=approve_url,
-            reject_url=reject_url,
-            expires_at=invitation.expires_at,
+            invitation_url=invitation_url,
+            expires_at_utc=invitation.expires_at,
             max_uses=invitation.max_uses
         )
     

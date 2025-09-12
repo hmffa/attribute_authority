@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, HTTPException, status, Response
+from fastapi import APIRouter, Depends, Request, HTTPException, status, Response, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -73,28 +73,28 @@ async def show_invitation_page(
     </html>
     """)
 
-# @router.post("/invitations/{invitation_hash}/confirm")
-# async def confirm_invitation(
-#     invitation_hash: str,
-#     action: str = Form(...),  # "accept" or "reject"
-#     claims: Dict[str, Any] = Depends(get_current_user_claims),
-#     db: AsyncSession = Depends(get_db_dependency())
-# ):
-#     """Process invitation acceptance or rejection"""
-#     if action == "accept":
-#         result = await invitation_service.accept_invitation(db, invitation_hash, claims)
-#         return HTMLResponse(content=f"""
-#         <html><body>
-#             <h1>Invitation Accepted</h1>
-#             <p>{result["message"]}</p>
-#             <a href="/">Return to homepage</a>
-#         </body></html>
-#         """)
-#     else:
-#         return HTMLResponse(content="""
-#         <html><body>
-#             <h1>Invitation Rejected</h1>
-#             <p>You have declined this invitation.</p>
-#             <a href="/">Return to homepage</a>
-#         </body></html>
-#         """)
+@router.post("/invitations/{invitation_hash}/confirm")
+async def confirm_invitation(
+    invitation_hash: str,
+    action: str = Form(...),  # "accept" or "reject"
+    claims: Dict[str, Any] = Depends(optional_user_claims),
+    db: AsyncSession = Depends(get_db_dependency())
+):
+    """Process invitation acceptance or rejection"""
+    if action == "accept":
+        result = await invitation_service.accept_invitation(db, invitation_hash, claims)
+        return HTMLResponse(content=f"""
+        <html><body>
+            <h1>Invitation Accepted</h1>
+            <p>{result["message"]}</p>
+            <a href="/">Return to homepage</a>
+        </body></html>
+        """)
+    else:
+        return HTMLResponse(content="""
+        <html><body>
+            <h1>Invitation Rejected</h1>
+            <p>You have declined this invitation.</p>
+            <a href="/">Return to homepage</a>
+        </body></html>
+        """)

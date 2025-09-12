@@ -12,7 +12,6 @@ class CRUDInvitation:
     async def create(db: AsyncSession, obj_in: InvitationCreate, creator_user_id: int) -> Invitation:
         """Create a new invitation"""
         now = datetime.now(timezone.utc)
-        expires_at = now + timedelta(minutes=obj_in.expires_in_minutes)
         
         # Generate a unique hash
         invitation_hash = secrets.token_urlsafe(32)
@@ -26,7 +25,7 @@ class CRUDInvitation:
             group_value=obj_in.group_value,
             max_uses=obj_in.max_uses,
             current_uses=0,
-            expires_at=expires_at.isoformat(),
+            expires_at=obj_in.expires_at,
             created_at=now.isoformat(),
             status="active"
         )

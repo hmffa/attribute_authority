@@ -2,48 +2,60 @@ from fastapi import APIRouter, Depends, Request, Response, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from typing import Optional, Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
-import flaat
 from urllib.parse import quote, unquote
+import secrets
+from authlib.integrations.starlette_client import OAuth, OAuthError
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.config import Config
+from flaat import access_tokens
+
+
 
 from ...core.config import settings
 from ...core.logging_config import logger
-from ...db.session import get_db
-from ...crud.user import crud_user
 from ..dependencies import get_db_dependency
+from ...crud.user import crud_user
+from ...schemas.user import UserCreate
 
 router = APIRouter()
 
-# Configure FLAAT with your OIDC providers
-oidc_config = {
-    "client_id": settings.OIDC_CLIENT_ID,
-    "client_secret": settings.OIDC_CLIENT_SECRET,
-    "redirect_uri": f"{settings.PUBLIC_BASE_URL}/api/v1/auth/callback"
-}
+# Configure OAuth with providers from settings
+oauth = OAuth()
+providers = []
 
-# Initialize FLAAT with your configuration
-flaat_handler = flaat.Flaat()
-flaat_handler.set_trusted_OP_list(settings.OIDC_PROVIDERS)
-flaat_handler.set_client_id(oidc_config["client_id"])
-flaat_handler.set_client_secret(oidc_config["client_secret"])
-flaat_handler.set_redirect_uri(oidc_config["redirect_uri"])
+for provider_name, provider in settings.OIDC_PROVIDERS.items():
+    provider_url = provider["url"]
+
+    client_id = provider["client_id"]
+    client_secret = provider["client_secret"]
+
+    if client_id and client_secret:
+        oauth.register(
+            name=provider_name,
+            server_metadata_url=f"{provider_url}/.well-known/openid-configuration",
+            client_id=client_id,
+            client_secret=client_secret,
+            client_kwargs={
+                'scope': 'openid email profile'
+            }
+        )
+        providers.append(provider_name)
+
+# Generate a random secret key for session encryption
+SECRET_KEY = getattr(settings, "SECRET_KEY", secrets.token_urlsafe(32))
 
 @router.get("/auth/login")
 async def login(request: Request, next: Optional[str] = Query(None)):
     """
-    Handle login requests. Redirects to the IDP login page.
-    Optionally takes a 'next' parameter for redirect after successful login.
+    Handle login requests. Shows available identity providers.
     """
-    logger.info("Login request received")
-    
-    # Store the next URL in session for later redirection after authentication
     redirect_after_login = next or "/"
     encoded_redirect = quote(redirect_after_login)
     
-    # Generate login page with provider selection
     providers_html = ""
-    for provider in settings.OIDC_PROVIDERS:
-        auth_url = flaat_handler.get_login_url(request, provider, state=encoded_redirect)
-        providers_html += f'<a href="{auth_url}" class="provider-button">{provider}</a><br>'
+    for provider_name in providers:
+        auth_url = f"/api/v1/auth/authorize/{provider_name}?next={encoded_redirect}"
+        providers_html += f'<a href="{auth_url}" class="provider-button">{provider_name}</a><br>'
     
     return HTMLResponse(content=f"""
     <!DOCTYPE html>
@@ -67,78 +79,146 @@ async def login(request: Request, next: Optional[str] = Query(None)):
     </html>
     """)
 
-@router.get("/auth/callback")
+@router.get("/auth/authorize/{provider}")
+async def authorize(request: Request, provider: str, next: Optional[str] = Query("/")):
+    """Initiate authentication flow with selected provider"""
+    redirect_uri = f"{settings.PUBLIC_BASE_URL}/api/v1/auth/callback/{provider}"
+    
+    # Store the post-login redirect URL in session
+    request.session['next_url'] = next
+    
+    client = oauth.create_client(provider)
+    if not client:
+        return HTMLResponse(content=f"<h1>Provider '{provider}' not configured</h1>", status_code=400)
+    
+    return await client.authorize_redirect(request, redirect_uri)
+
+@router.get("/auth/callback/{provider}")
 async def oidc_callback(
     request: Request, 
-    code: str, 
-    state: Optional[str] = None,
+    provider: str,
     db: AsyncSession = Depends(get_db_dependency())
 ):
     """
     Handle the OIDC callback after user authentication.
-    Processes the authorization code and creates/updates the user.
     """
     try:
-        # Exchange code for token and get user info
-        user_info = await flaat_handler.get_user_info_from_code(request, code)
-        
-        # Extract important claims
-        sub = user_info.get("sub")
-        iss = user_info.get("iss")
-        email = user_info.get("email")
-        name = user_info.get("name", "")
-        
+        client = oauth.create_client(provider)
+        token_response = await client.authorize_access_token(request)
+        id_token = token_response.get("id_token")
+
+        if not id_token:
+            logger.error("Missing ID token")
+            return HTMLResponse(content="<html><body><h1>Authentication Error</h1><p>Missing ID token</p></body></html>")
+
+        claims = access_tokens.get_access_token_info(id_token, verify=False) # TODO Do not forget to turn this on in production
+        sub = claims.body.get("sub")
+        iss = claims.body.get("iss")
+
         if not sub or not iss:
             logger.error("Missing required claims in token")
             return HTMLResponse(content="<html><body><h1>Authentication Error</h1><p>Missing required user information</p></body></html>")
         
         # Create or update user
-        db_user = await crud_user.get_by_sub_and_iss(db, sub, iss)
-        if not db_user:
-            # Create new user
-            from ...schemas.user import UserCreate
-            user_create = UserCreate(
-                sub=sub,
-                iss=iss,
-                email=email,
-                name=name,
-                is_active=True
-            )
-            db_user = await crud_user.create(db, obj_in=user_create)
+        user = await crud_user.get_by_sub_and_iss(db, sub=sub, iss=iss)
+        if not user:
+            user = await crud_user.create(db, UserCreate(sub=sub, iss=iss))
         
-        # Create session token
-        session_token = flaat_handler.create_session_token(user_info)
-        response = RedirectResponse(url="/")
+        # Get the redirect URL from session
+        redirect_url = request.session.get('next_url', '/')
         
-        # If state contains a redirect URL, use it
-        if state:
-            try:
-                redirect_url = unquote(state)
-                response = RedirectResponse(url=redirect_url)
-            except Exception as e:
-                logger.error(f"Error decoding redirect URL: {e}")
         
-        # Set session cookie
+        # Create response with redirect
+        response = RedirectResponse(url=redirect_url)
+
         response.set_cookie(
-            key=settings.SESSION_COOKIE_NAME,
-            value=session_token,
+            key="id_token",
+            value=id_token,
             httponly=True,
-            secure=settings.ENVIRONMENT != "development",
-            max_age=settings.SESSION_COOKIE_MAX_AGE
-        )
-        
+            secure=settings.ENVIRONMENT == "production",
+            max_age=300 # TODO Time for cookie expiration (consult for a better value)
+        ) # TODO change this to session cookie?!
+
         return response
         
+    except OAuthError as error:
+        logger.error(f"OAuth error: {error.error}")
+        return HTMLResponse(
+            content=f"<html><body><h1>Authentication Error</h1><p>{error.description}</p></body></html>",
+            status_code=400
+        )
     except Exception as e:
-        logger.error(f"Error during OIDC callback: {e}")
+        logger.error(f"Error during OIDC callback: {e}", exc_info=True)
         return HTMLResponse(
             content="<html><body><h1>Authentication Error</h1><p>Could not process login. Please try again.</p></body></html>",
             status_code=400
         )
 
-@router.get("/auth/logout")
-async def logout(response: Response):
-    """Log out the current user by clearing the session cookie."""
-    response = RedirectResponse(url="/")
-    response.delete_cookie(key=settings.SESSION_COOKIE_NAME)
-    return response
+# @router.get("/auth/logout")
+# async def logout(request: Request):
+#     """Log out the current user by clearing tokens and session."""
+#     response = RedirectResponse(url="/")
+    
+#     # Clear cookies
+#     response.delete_cookie(key="access_token")
+#     response.delete_cookie(key="refresh_token")
+#     response.delete_cookie(key="csrf_token")
+    
+#     # Clear session
+#     request.session.clear()
+    
+#     return response
+
+# @router.get("/auth/refresh")
+# async def refresh_token(request: Request):
+#     """Refresh the access token using a refresh token"""
+#     refresh_token = request.cookies.get("refresh_token")
+#     if not refresh_token:
+#         return RedirectResponse(url="/api/v1/auth/login", status_code=303)
+    
+#     # Get provider from user session
+#     if 'user' not in request.session or 'iss' not in request.session['user']:
+#         return RedirectResponse(url="/api/v1/auth/login", status_code=303)
+    
+#     # Find provider by issuer
+#     provider_name = None
+#     for p in providers:
+#         client = oauth.create_client(p)
+#         if client and client.server_metadata_url.startswith(request.session['user']['iss']):
+#             provider_name = p
+#             break
+    
+#     if not provider_name:
+#         logger.error("Could not find provider for token refresh")
+#         return RedirectResponse(url="/api/v1/auth/login", status_code=303)
+    
+#     try:
+#         # Use the refresh token to get a new access token
+#         client = oauth.create_client(provider_name)
+#         token = await client.refresh_token(refresh_token)
+        
+#         response = RedirectResponse(url="/", status_code=303)
+        
+#         # Update tokens in cookies
+#         response.set_cookie(
+#             key="access_token",
+#             value=token['access_token'],
+#             httponly=True,
+#             secure=settings.ENVIRONMENT == "production",
+#             max_age=token.get('expires_in', 3600)
+#         )
+        
+#         if 'refresh_token' in token:
+#             response.set_cookie(
+#                 key="refresh_token",
+#                 value=token['refresh_token'],
+#                 httponly=True,
+#                 secure=settings.ENVIRONMENT == "production",
+#                 max_age=86400 * 30  # 30 days
+#             )
+        
+#         return response
+        
+#     except Exception as e:
+#         logger.error(f"Error refreshing token: {e}", exc_info=True)
+#         return RedirectResponse(url="/api/v1/auth/login", status_code=303)

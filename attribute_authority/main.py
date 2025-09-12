@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 import time
 from typing import Callable
 from starlette.requests import Request
@@ -59,6 +60,12 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
 # Add middleware
 app.add_middleware(LoggingMiddleware)
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,  
+    max_age=86400 * 30,              # Optional: session expiry (30 days)
+)
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)

@@ -5,7 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from ..core.config import settings
 
 
-def send_invitation_email(to: str, subject: str, body: str):
+async def send_invitation_email(to: str, subject: str, body: str):
     msg = MIMEMultipart()
     msg["From"] = settings.SMTP_MAIL_SENDER
     msg["To"] = to

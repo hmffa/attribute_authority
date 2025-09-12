@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, List, Optional, Union
 from pydantic import AnyHttpUrl, PostgresDsn, field_validator, ValidationInfo
 from pydantic_settings import BaseSettings
@@ -8,6 +9,10 @@ class Settings(BaseSettings):
 
     # CORS Configuration
     BACKEND_CORS_ORIGINS: Union[str, List[AnyHttpUrl]] = ""
+
+    SECRET_KEY: str = ""
+
+    ENVIRONMENT: str = "production"
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     def assemble_cors_origins(cls, v):
@@ -48,6 +53,18 @@ class Settings(BaseSettings):
     # OIDC Configuration
     TRUSTED_OP_LIST: str = ""  # Comma-separated list of trusted OPs
     # TOKEN_CACHE_LIFETIME: int = 120  # seconds
+    OIDC_PROVIDERS: Dict[str, Dict[str, str]] = {}
+
+    @field_validator("OIDC_PROVIDERS", mode="before")
+    def parse_oidc_providers(cls, v): # pylint: disable=no-self-argument
+        if isinstance(v, str) and v:
+            try:
+                return json.loads(v)
+            except json.JSONDecodeError:
+                return {}
+        elif isinstance(v, dict):
+            return v
+        return {}
 
     LOG_LEVEL: str = "INFO"
 

@@ -16,6 +16,8 @@ from .core.logging_config import logger
 from .api.endpoints.user_attributes import userattributes as versioned_userattributes
 from .api.dependencies import get_current_user_claims, get_db_dependency
 from .scripts.startup import insert_user_from_config
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -86,4 +88,8 @@ async def root():
         "app_name": settings.APP_NAME,
         "message": "Welcome to UserInfo API. Access /userinfo with a valid token."
     }
+
+# Serve static files
+BASE_DIR = Path(__file__).resolve().parent
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 

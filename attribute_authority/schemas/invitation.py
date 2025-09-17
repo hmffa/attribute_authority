@@ -32,7 +32,7 @@ class InvitationCreate(InvitationBase):
             dt = datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(seconds=self.expires_in_seconds)
         else:
             raise ValueError("Either expires_in_seconds or expires_at_epoch_seconds must be provided.")
-        return dt.isoformat() + 'Z'
+        return dt.isoformat()
     
 class Invitation(InvitationBase):
     id: int

@@ -30,7 +30,7 @@ async def optional_user_claims(request: Request):
     Try to validate token but don't raise exception if not present.
     First, use cookie-stored id_token (set during login callback).
     """
-    id_token = request.cookies.get('id_token')
+    id_token = request.cookies.get('id_token') # TODO Update to session
     if id_token:
         token_info = access_tokens.get_access_token_info(id_token, verify=settings.ENVIRONMENT == "production")
         return token_info.body

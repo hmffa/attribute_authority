@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Invitation</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="/static/js/invitation.js"></script>
+</head>
+<body>
+    <div id="invitation-url" data-url="{{ invitation_url }}"></div>
+    <div class="invitation-card">
+        <div class="invitation-header">
+            <h1>Invitation to Join Group</h1>
+            <p>You have been invited by Admin to join the group:</p>
+        </div>
+        
+        <div class="invitation-body">
+            <div class="invitation-details">
+                <p><strong>Group:</strong> {{ invitation.group_value }}</p>
+                <div id="expiry" data-expiry="{{ expiry_at }}"></div>
+                <p><strong>Expires:</strong> <span id="expiry-at"></span></p>
+                <p><strong>Remaining spots:</strong> {{ remaining_uses }} of {{ invitation.max_uses }}</p>
+            </div>
+            
+            <div class="qr-container">
+                <div id="qrcode"></div>
+            </div>
+            
+            <p>Please review the invitation and choose to approve or reject your membership:</p>
+            
+            <form action="/api/v1/invitations/{{ invitation.hash }}/confirm" method="post">
+                <div class="button-container">
+                    <button type="submit" name="action" value="accept" class="btn btn-approve">Approve</button>
+                    <button type="submit" name="action" value="reject" class="btn btn-reject">Reject</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="meta-info">
+            <span>If you did not expect this invitation, you can safely ignore this message.</span>
+        </div>
+    </div>
+</body>
+</html>

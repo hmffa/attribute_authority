@@ -1,13 +1,20 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, status, Response, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
+import os
+from pathlib import Path
 
 from ..dependencies import get_current_user_claims, get_db_dependency, optional_user_claims
 from ...services.invitation_service import invitation_service
 from ...crud.invitation import crud_invitation
 from ...schemas.invitation import InvitationCreate, InvitationResponse, InvitationList, InvitationDetails
 from ...core.logging_config import logger
+
+# Set up templates directory
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 router = APIRouter()
 
@@ -73,28 +80,89 @@ async def show_invitation_page(
     </html>
     """)
 
+
 @router.post("/invitations/{invitation_hash}/confirm")
 async def confirm_invitation(
     invitation_hash: str,
+    request: Request,
     action: str = Form(...),  # "accept" or "reject"
     claims: Dict[str, Any] = Depends(optional_user_claims),
     db: AsyncSession = Depends(get_db_dependency())
 ):
+    if not claims:
+        return RedirectResponse(
+            url=f"/api/v1/invitations/{invitation_hash}",
+            status_code=302)
     """Process invitation acceptance or rejection"""
     if action == "accept":
         result = await invitation_service.accept_invitation(db, invitation_hash, claims)
-        return HTMLResponse(content=f"""
-        <html><body>
-            <h1>Invitation Accepted</h1>
-            <p>{result["message"]}</p>
-            <a href="/">Return to homepage</a>
-        </body></html>
-        """)
+        if result["status"] == "info":
+            title = "Already a Member"
+        else:
+            title = "Invitation Accepted"
+        return templates.TemplateResponse(
+            "result.html", 
+            {
+                "request": request,
+                "title": title,
+                "message": result["message"],
+                "success": True
+            }
+        )
     else:
-        return HTMLResponse(content="""
-        <html><body>
-            <h1>Invitation Rejected</h1>
-            <p>You have declined this invitation.</p>
-            <a href="/">Return to homepage</a>
-        </body></html>
-        """)
+        return templates.TemplateResponse(
+            "result.html", 
+            {
+                "request": request,
+                "title": "Invitation Rejected",
+                "message": "You have declined this invitation.",
+                "success": False
+            }
+        )
+
+@router.get("/invitations/{invitation_hash}", response_class=HTMLResponse)
+async def show_invitation_page(
+    invitation_hash: str,
+    request: Request,
+    claims: Dict[str, Any] = Depends(optional_user_claims),
+    db: AsyncSession = Depends(get_db_dependency())
+):
+    """Show invitation page with QR code and details"""
+    invitation = await crud_invitation.get_by_hash(db, invitation_hash)
+    if not invitation:
+        return templates.TemplateResponse("error.html", {"request": request, "message": "Invalid invitation"})
+    
+    # Check if invitation is valid
+    is_valid = await crud_invitation.check_invitation_valid(invitation)
+    if not is_valid:
+        return templates.TemplateResponse("error.html", 
+                                         {"request": request, 
+                                          "message": "This invitation has expired or already been used"})
+    
+    # If user is not logged in, redirect to login page
+    if not claims:
+        login_url = f"/api/v1/auth/login?next=/api/v1/invitations/{invitation_hash}"
+        return RedirectResponse(url=login_url)
+    
+    # Calculate expiration time in human-readable format
+    from datetime import datetime
+    expires_at = datetime.fromisoformat(invitation.expires_at)
+        
+    # Calculate remaining uses
+    remaining_uses = invitation.max_uses - invitation.current_uses
+    
+    # Invitation URL for QR code
+    invitation_url = f"{request.url.scheme}://{request.url.netloc}/api/v1/invitations/{invitation_hash}"
+    
+    # Render the template with context
+    return templates.TemplateResponse(
+        "invitation.html",
+        {
+            "request": request,
+            "invitation": invitation,
+            "invitation_url": invitation_url,
+            "expiry_at": expires_at,
+            "remaining_uses": remaining_uses
+        }
+    )
+

@@ -3,6 +3,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 import os
+from sqlalchemy.exc import IntegrityError
 
 from ..crud.invitation import crud_invitation
 from ..crud.user import crud_user
@@ -93,23 +94,35 @@ class InvitationService:
                 detail="User not found"
             )
         
-        # Add the attribute/group to the user
-        await crud_user_attribute.create(
-            db, 
-            user_id=user.id,
-            key=invitation.group_key,
-            value=invitation.group_value
-        )
+
+        group_key = invitation.group_key
+        group_value = invitation.group_value
+        try:
+            # Add the attribute/group to the user
+            await crud_user_attribute.create(
+                db, 
+                user_id=user.id,
+                key=invitation.group_key,
+                value=invitation.group_value
+            )
+        except IntegrityError:
+            await db.rollback()
+            return {
+                "status": "info",
+                "message": f"You are already a member of {group_value}",
+                "group_key": group_key,
+                "group_value": group_value
+            }
         
         # Mark invitation as used
         await crud_invitation.use_invitation(db, invitation)
 
         # send email to the user
-        await send_email(
-            to=user.email,
-            subject="Invitation Accepted",
-            body=f"You have been added to {invitation.group_value}"
-        )
+        # await send_email(
+        #     to=user.email,
+        #     subject="Invitation Accepted",
+        #     body=f"You have been added to {invitation.group_value}"
+        # )
 
         return {
             "status": "success",

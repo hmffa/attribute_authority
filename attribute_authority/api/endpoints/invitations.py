@@ -11,6 +11,7 @@ from ...services.invitation_service import invitation_service
 from ...crud.invitation import crud_invitation
 from ...schemas.invitation import InvitationCreate, InvitationResponse, InvitationList, InvitationDetails
 from ...core.logging_config import logger
+from ...crud.user import crud_user
 
 # Set up templates directory
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -35,7 +36,7 @@ async def list_invitations(
     """List all invitations created by current user"""
     sub = claims.get("sub")
     iss = claims.get("iss")
-    from ...crud.user import crud_user
+
     
     user = await crud_user.get_by_sub_and_iss(db, sub, iss)
     if not user:

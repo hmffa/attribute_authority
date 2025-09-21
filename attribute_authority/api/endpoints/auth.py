@@ -41,8 +41,8 @@ for provider_name, provider in settings.OIDC_PROVIDERS.items():
         )
         providers.append(provider_name)
 
-# Generate a random secret key for session encryption
-SECRET_KEY = getattr(settings, "SECRET_KEY", secrets.token_urlsafe(32))
+# # Generate a random secret key for session encryption
+# SECRET_KEY = getattr(settings, "SECRET_KEY", secrets.token_urlsafe(32))
 
 @router.get("/auth/login")
 async def login(request: Request, next: Optional[str] = Query(None)):
@@ -57,6 +57,7 @@ async def login(request: Request, next: Optional[str] = Query(None)):
         auth_url = f"/api/v1/auth/authorize/{provider_name}?next={encoded_redirect}"
         providers_html += f'<a href="{auth_url}" class="provider-button">{provider_name}</a><br>'
     
+    # TODO Add a better HTML template for login page
     return HTMLResponse(content=f"""
     <!DOCTYPE html>
     <html>
@@ -131,13 +132,16 @@ async def oidc_callback(
         # Create response with redirect
         response = RedirectResponse(url=redirect_url)
 
-        response.set_cookie(
-            key="id_token",
-            value=id_token,
-            httponly=True,
-            secure=settings.ENVIRONMENT == "production",
-            max_age=300 # TODO Time for cookie expiration (consult for a better value)
-        ) # TODO change this to session cookie?!
+        # response.set_cookie(
+        #     key="id_token",
+        #     value=id_token,
+        #     httponly=True,
+        #     secure=settings.ENVIRONMENT == "production",
+        #     max_age=300 # TODO Time for cookie expiration (consult for a better value)
+        # ) # TODO change this to session cookie?!
+
+        request.session["id_token"] = id_token 
+
 
         return response
         
@@ -153,6 +157,9 @@ async def oidc_callback(
             content="<html><body><h1>Authentication Error</h1><p>Could not process login. Please try again.</p></body></html>",
             status_code=400
         )
+
+
+# TODO Add logout endpoint?!
 
 # @router.get("/auth/logout")
 # async def logout(request: Request):

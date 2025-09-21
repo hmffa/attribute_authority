@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 
 from ..crud.invitation import crud_invitation
 from ..crud.user import crud_user
+from ..schemas.user import UserCreate
 from ..crud.user_attribute import crud_user_attribute
 from ..schemas.invitation import InvitationCreate, InvitationResponse
 from ..core.config import settings
@@ -23,10 +24,7 @@ class InvitationService:
         # Get user ID from claims
         user = await crud_user.get_by_sub_and_iss(db, sub, iss)
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            user = await crud_user.create(db, UserCreate(sub=sub, iss=iss))
         
         # Create invitation
         invitation = await crud_invitation.create(db, obj_in, user.id)

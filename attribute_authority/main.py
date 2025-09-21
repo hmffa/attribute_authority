@@ -43,6 +43,16 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_headers=["*"],
     )
 
+# app.add_middleware(
+#     SessionMiddleware,
+#     secret_key=settings.SECRET_KEY,
+#     session_cookie="aa_session",
+#     same_site="lax",
+#     https_only=settings.ENVIRONMENT == "production",
+#     max_age=3600,
+# )
+
+
 # Logging middleware
 class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:

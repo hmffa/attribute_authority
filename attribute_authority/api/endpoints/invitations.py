@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Depends, Request, HTTPException, status, Response, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 import os
-from pathlib import Path
 from datetime import datetime
 
 
@@ -14,10 +12,8 @@ from ...crud.invitation import crud_invitation
 from ...schemas.invitation import InvitationCreate, InvitationResponse, InvitationList, InvitationDetails
 from ...core.logging_config import logger
 from ...crud.user import crud_user
+from ...web.templating import templates
 
-# Set up templates directory
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 router = APIRouter()
 

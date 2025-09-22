@@ -16,6 +16,7 @@ from ...core.logging_config import logger
 from ..dependencies import get_db_dependency
 from ...crud.user import crud_user
 from ...schemas.user import UserCreate
+from ...web.templating import templates
 
 router = APIRouter()
 
@@ -163,7 +164,10 @@ async def oidc_callback(
 async def logout(request: Request):
     """Log out the current user by clearing the session."""
     request.session.clear()
-    return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse(
+        "logout_success.html",
+        {"request": request}
+    )
 
 # @router.get("/auth/logout")
 # async def logout(request: Request):

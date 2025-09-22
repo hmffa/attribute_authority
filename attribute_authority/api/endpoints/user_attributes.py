@@ -1,19 +1,14 @@
 from fastapi import APIRouter, Depends, Request
-from pathlib import Path
 from typing import Dict, Any
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..dependencies import get_current_user_claims, get_db_dependency, optional_user_claims
 from ...services.user_service import user_service
 from ...core.logging_config import logger
+from ...web.templating import templates
 
 router = APIRouter()
-
-# Set up templates directory
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 @router.get("/userattributes", response_model=Dict[str, Any])
 async def userattributes(

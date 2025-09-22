@@ -11,7 +11,6 @@ from ..schemas.user import UserCreate
 from ..crud.user_attribute import crud_user_attribute
 from ..schemas.invitation import InvitationCreate, InvitationResponse
 from ..core.config import settings
-from .template_service import render_template
 from .email_service import send_invitation_email
 
 class InvitationService:

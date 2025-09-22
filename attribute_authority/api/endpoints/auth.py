@@ -159,7 +159,11 @@ async def oidc_callback(
         )
 
 
-# TODO Add logout endpoint?!
+@router.get("/auth/logout")
+async def logout(request: Request):
+    """Log out the current user by clearing the session."""
+    request.session.clear()
+    return RedirectResponse(url="/", status_code=302)
 
 # @router.get("/auth/logout")
 # async def logout(request: Request):

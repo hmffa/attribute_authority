@@ -5,6 +5,8 @@ from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 import os
 from pathlib import Path
+from datetime import datetime
+
 
 from ..dependencies import get_current_user_claims, get_db_dependency, optional_user_claims
 from ...services.invitation_service import invitation_service
@@ -146,7 +148,6 @@ async def show_invitation_page(
         return RedirectResponse(url=login_url)
     
     # Calculate expiration time in human-readable format
-    from datetime import datetime
     expires_at = datetime.fromisoformat(invitation.expires_at)
         
     # Calculate remaining uses

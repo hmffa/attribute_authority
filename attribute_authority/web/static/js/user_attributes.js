@@ -38,7 +38,7 @@
   function hideValue(key, id) {
     if (state.hidden[key] === "__all__") return; // already hidden
     if (!Array.isArray(state.hidden[key])) state.hidden[key] = [];
-    if (!state.hidden[key].includes(id)) state.hidden[key].push(id);
+    if (!state.hidden[key].includes(id)) state.hidden[key].push(id); // TODO not working properly
     saveHidden();
   }
   function isHidden(key) {
@@ -54,10 +54,13 @@
     toast("Hidden attributes reset");
   }
 
-  function toast(msg) {
+  function toast(msg, after) {
     toastEl.textContent = msg;
     toastEl.classList.add("show");
-    setTimeout(() => toastEl.classList.remove("show"), 1600);
+    setTimeout(() => {
+      toastEl.classList.remove("show");
+      if (typeof after === "function") after();
+    }, 1600);
   }
 
   function confirmAction({ title = "Confirm", text = "Are you sure?", onConfirm }) {
@@ -161,7 +164,7 @@
             } catch { /* ignore if not wired */ }
             hideValue(key, id);
             render();
-            toast(`Removed value from "${key}"`);
+            toast(`Removed value from "${key}"`, () => location.reload());
           }
         });
         break;

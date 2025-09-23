@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from tomlkit import key, value
 
 from ..dependencies import get_current_user_claims, get_db_dependency, optional_user_claims
+from ...crud.user_attribute import crud_user_attribute
 from ...services.user_service import user_service
 from ...core.logging_config import logger
 from ...web.templating import templates
@@ -77,15 +78,16 @@ async def myattributes(
 
 @router.delete("/user/myattributes/{attr_id}", response_model=Dict[str, Any])
 async def delete_user_attribute(
-    attr_id: str,
+    attr_id: int,
     request: Request,
-    claims: Dict[str, Any] = Depends(get_current_user_claims),
+    claims: Dict[str, Any] = Depends(optional_user_claims),
     db: AsyncSession = Depends(get_db_dependency()),
 ):
     """
     Attribute Authority Delete User Attribute Endpoint.
     Deletes a specific user attribute based on the provided access token.
     """
+    # TODO Handle Delete all values for a given key in tryServerDelete
     logger.info(f"Processing delete_user_attribute request for sub: {claims.get('sub')} and attribute id: {attr_id}")
-    await user_service.delete_user_attribute(db, claims, attr_id)
+    await crud_user_attribute.delete(db, attr_id=attr_id)
     return {"status": "success", "message": "Attribute deleted successfully."}

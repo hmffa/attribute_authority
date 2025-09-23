@@ -35,10 +35,10 @@
     state.hidden[key] = "__all__";
     saveHidden();
   }
-  function hideValue(key, value) {
+  function hideValue(key, id) {
     if (state.hidden[key] === "__all__") return; // already hidden
     if (!Array.isArray(state.hidden[key])) state.hidden[key] = [];
-    if (!state.hidden[key].includes(value)) state.hidden[key].push(value);
+    if (!state.hidden[key].includes(id)) state.hidden[key].push(id);
     saveHidden();
   }
   function isHidden(key) {
@@ -110,9 +110,9 @@
     });
   }
 
-  function tryServerDelete({ key, value }) {
+  function tryServerDelete({ id }) {
     // Optional: call server if wired; fall back to client-side hide.
-    return fetch(`/api/v1/user/myattributes/${key}/${value}`, {
+    return fetch(`/api/v1/user/myattributes/${id}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -151,15 +151,15 @@
         break;
       }
       case "remove-value": {
-        const value = btn.dataset.value;
+        const id = btn.dataset.id;
         confirmAction({
           title: "Remove value",
           text: `Remove value from "${key}"?`,
           onConfirm: async () => {
             try {
-              await tryServerDelete({ key, value });
+              await tryServerDelete({ id });
             } catch { /* ignore if not wired */ }
-            hideValue(key, value);
+            hideValue(key, id);
             render();
             toast(`Removed value from "${key}"`);
           }

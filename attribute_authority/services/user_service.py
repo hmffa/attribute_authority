@@ -56,4 +56,19 @@ class UserService:
             )
         return result
 
+    @staticmethod
+    async def get_userattributes_with_ids(db: AsyncSession, claims: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generate OIDC-compliant userattributes from user data, including attribute IDs.
+        """
+        sub = claims.get("sub")
+        iss = claims.get("iss")
+        user = await UserService.get_user(db, sub, iss)
+        attributes = await crud_user_attribute.get_by_user_id(db, user.id)
+        result = defaultdict(list)
+        for attr in attributes:
+            result[attr.key].append({"id": attr.id, "value": attr.value})
+
+        return result
+
 user_service = UserService()

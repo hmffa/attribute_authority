@@ -112,10 +112,9 @@
 
   function tryServerDelete({ key, value }) {
     // Optional: call server if wired; fall back to client-side hide.
-    return fetch("/api/v1/attributes", {
+    return fetch(`/api/v1/user/myattributes/${key}/${value}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key, value }),
       credentials: "include",
     }).then(res => {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

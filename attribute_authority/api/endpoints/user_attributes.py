@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from typing import Dict, Any
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from tomlkit import key, value
 
 from ..dependencies import get_current_user_claims, get_db_dependency, optional_user_claims
 from ...services.user_service import user_service
@@ -38,7 +39,7 @@ async def userattribute(
     return await user_service.get_userattribute(db, claims, key)
 
 
-@router.get("/myattributes", response_model=Dict[str, Any])
+@router.get("/user/myattributes", response_model=Dict[str, Any])
 async def myattributes(
     request: Request,
     claims: Dict[str, Any] = Depends(optional_user_claims),
@@ -48,14 +49,15 @@ async def myattributes(
     Attribute Authority My Attributes Endpoint.
     Returns all attributes of the current user.
     """
+    current_url = request.url.path
     if not claims:
-        login_url = f"/api/v1/auth/login?next=/api/v1/myattributes"
+        login_url = f"/api/v1/auth/login?next={current_url}"
         return RedirectResponse(url=login_url)
 
     logger.info(f"Processing myattributes request for sub: {claims.get('sub')}")
 
     # Fetch user attributes using your existing service
-    attributes = await user_service.get_userattributes(db, claims)
+    attributes = await user_service.get_userattributes_with_ids(db, claims)
 
     display_claims = {
         "sub": claims.get("sub"),
@@ -73,6 +75,17 @@ async def myattributes(
         },
     )
 
-
-
-
+@router.delete("/user/myattributes/{attr_id}", response_model=Dict[str, Any])
+async def delete_user_attribute(
+    attr_id: str,
+    request: Request,
+    claims: Dict[str, Any] = Depends(get_current_user_claims),
+    db: AsyncSession = Depends(get_db_dependency()),
+):
+    """
+    Attribute Authority Delete User Attribute Endpoint.
+    Deletes a specific user attribute based on the provided access token.
+    """
+    logger.info(f"Processing delete_user_attribute request for sub: {claims.get('sub')} and attribute id: {attr_id}")
+    await user_service.delete_user_attribute(db, claims, attr_id)
+    return {"status": "success", "message": "Attribute deleted successfully."}

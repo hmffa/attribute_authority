@@ -43,6 +43,8 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_headers=["*"],
     )
 
+app.mount("/static", StaticFiles(directory="attribute_authority/web/static"), name="static")
+
 # app.add_middleware(
 #     SessionMiddleware,
 #     secret_key=settings.SECRET_KEY,
@@ -76,7 +78,7 @@ app.add_middleware(LoggingMiddleware)
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.SECRET_KEY,  
-    max_age=86400 * 30,              # Optional: session expiry (30 days)
+    max_age=3600,             # 1 hour session duration
 )
 
 # Include API router

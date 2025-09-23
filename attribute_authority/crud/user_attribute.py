@@ -1,4 +1,4 @@
-from http.client import HTTPException
+from fastapi import HTTPException
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -26,6 +26,7 @@ class CRUDUserAttribute:
         query = select(UserAttribute).where(UserAttribute.user_id == user_id, UserAttribute.key == key)
         result = await db.execute(query)
         return result.scalars().all()
+    
 
     @staticmethod
     async def create(db: AsyncSession, user_id: int, key: str, value: str) -> UserAttribute:
@@ -55,11 +56,14 @@ class CRUDUserAttribute:
         return db_obj
 
     @staticmethod
-    async def delete(db: AsyncSession, user_id: int, key: str, value: str) -> None:
+    async def delete(db: AsyncSession, user_id: int, key: str, value: str, attr_id: Optional[int]) -> None:
         """
         Delete a user attribute.
         """
-        query = select(UserAttribute).where(UserAttribute.user_id == user_id, UserAttribute.key == key, UserAttribute.value == value)
+        if attr_id:
+            query = select(UserAttribute).where(UserAttribute.id == attr_id)
+        else:
+            query = select(UserAttribute).where(UserAttribute.user_id == user_id, UserAttribute.key == key, UserAttribute.value == value)
         result = await db.execute(query)
         db_obj = result.scalar_one_or_none()
         if not db_obj:

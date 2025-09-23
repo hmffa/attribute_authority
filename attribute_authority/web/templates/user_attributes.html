@@ -72,9 +72,19 @@
                   {% if value is sequence and value is not string %}
                     <div class="chips" data-type="sequence">
                       {% for item in value %}
-                        <span class="chip" data-value="{{ item }}">
-                          <span class="chip-text mono">{{ item }}</span>
-                          <button class="chip-remove" title="Remove value" aria-label="Remove value" data-action="remove-value" data-value="{{ item }}">
+                        {% if item is mapping %}
+                          {% set item_id = item.get('id') %}
+                          {% set item_val = item.get('value') %}
+                        {% else %}
+                          {% set item_id = None %}
+                          {% set item_val = item %}
+                        {% endif %}
+                        <span class="chip" data-value="{{ item_val }}" {% if item_id is not none %}data-id="{{ item_id }}"{% endif %}>
+                          <span class="chip-text mono">{{ item_val }}</span>
+                          <button class="chip-remove" title="Remove value" aria-label="Remove value"
+                                  data-action="remove-value"
+                                  data-value="{{ item_val }}"
+                                  {% if item_id is not none %}data-id="{{ item_id }}"{% endif %}>
                             <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M6 7h12l-1 13H7L6 7zm3-3h6l1 2H8l1-2z"/></svg>
                           </button>
                         </span>
@@ -82,18 +92,31 @@
                     </div>
                     <details class="raw">
                       <summary>Raw JSON</summary>
-                      <pre class="code">{{ value | tojson(indent=2) }}</pre>
+                      <pre class="code">{{ attributes[key] | map(attribute='value') | list | tojson(indent=2) }}</pre>
                     </details>
                   {% elif value is mapping %}
+                    {% if value.get('value') is not none and value.get('id') is not none %}
+                      <div class="chips" data-type="single">
+                        <span class="chip" data-value="{{ value.get('value') }}" data-id="{{ value.get('id') }}">
+                          <span class="chip-text mono">{{ value.get('value') }}</span>
+                          <button class="chip-remove" title="Remove value" aria-label="Remove value"
+                                  data-action="remove-value"
+                                  data-value="{{ value.get('value') }}"
+                                  data-id="{{ value.get('id') }}">
+                            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M6 7h12l-1 13H7L6 7zm3-3h6l1 2H8l1-2z"/></svg>
+                          </button>
+                        </span>
+                      </div>
+                    {% endif %}
                     <details class="raw open">
                       <summary>Raw JSON</summary>
-                      <pre class="code">{{ value | tojson(indent=2) }}</pre>
+                      <pre class="code">{{ attributes[key] | map(attribute='value') | list | tojson(indent=2) }}</pre>
                     </details>
                   {% else %}
                     <div class="scalar mono">{{ value }}</div>
                     <details class="raw">
                       <summary>Raw JSON</summary>
-                      <pre class="code">{{ value | tojson(indent=2) }}</pre>
+                      <pre class="code">{{ attributes[key] | map(attribute='value') | list | tojson(indent=2) }}</pre>
                     </details>
                   {% endif %}
                 </div>

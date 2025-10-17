@@ -22,7 +22,6 @@
   const toggleRawBtn = $("#toggle-raw");
   const collapseBtn = $("#collapse-all");
   const expandBtn = $("#expand-all");
-  const resetHiddenBtn = $("#reset-hidden");
 
   function loadHidden() {
     try { return JSON.parse(localStorage.getItem(storageKey) || "{}"); }
@@ -46,12 +45,6 @@
   }
   function isValueHidden(key, value) {
     return Array.isArray(state.hidden[key]) && state.hidden[key].includes(String(value));
-  }
-  function resetHidden() {
-    state.hidden = {};
-    saveHidden();
-    render();
-    toast("Hidden attributes reset");
   }
 
   function toast(msg, after) {
@@ -185,7 +178,6 @@
   toggleRawBtn?.addEventListener("click", () => { state.rawOpen = !state.rawOpen; render(); });
   collapseBtn?.addEventListener("click", () => { state.rawOpen = false; render(); });
   expandBtn?.addEventListener("click", () => { state.rawOpen = true; render(); });
-  resetHiddenBtn?.addEventListener("click", resetHidden);
 
   // First paint
   render();

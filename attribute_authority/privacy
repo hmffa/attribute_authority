@@ -1,0 +1,57 @@
+Privacy Notice for Test Attribute Authority
+Version: 1.0
+
+1) Who we are
+- Controller: [Organization/Project Name]
+- Contact: [Privacy Email or URL]
+- Data Protection Officer (if applicable): [Contact]
+
+2) What we collect
+- Account and identifiers: name, email, organization, user ID.
+- Attribute data: claims/attributes you request us to issue, verify, or manage (e.g., roles, entitlements, affiliations).
+- Verification artifacts: evidence you submit for attribute proofing (e.g., documents, attestations, issuer references).
+- Technical data: IP address, timestamps, device/agent info, logs and audit trails.
+- Keys and credentials: public keys, certificate metadata, revocation status. We do not store your private keys.
+
+3) Why we collect it (purposes)
+- Provide core service: issue, verify, manage, and revoke attributes and attestations.
+- Security: authentication, authorization, fraud prevention, abuse detection, and auditing.
+- Reliability: logging, debugging, performance monitoring.
+- Compliance: legal, regulatory, and contractual obligations.
+- Communications: service notifications, incident and policy updates.
+
+4) Legal bases (if GDPR applies)
+- Contract: to deliver the service you request.
+- Legitimate interests: securing the service, preventing abuse, and improving reliability.
+- Consent: where required (e.g., optional telemetry or specific disclosures).
+- Legal obligation: recordkeeping or responding to lawful requests.
+
+5) How we process data
+- Data minimization: we collect only what is necessary for the requested attributes and proofs.
+- Storage: encrypted at rest; access is role-restricted and audited.
+- Transmission: encrypted in transit (TLS).
+- Automated decisions: attribute issuance/validation may be automated; you can request human review where feasible.
+
+6) Retention
+- Operational logs: [e.g., 30–180 days] unless needed for security or legal holds.
+- Attribute records and revocation data: retained while active and for [e.g., 1–3 years] after expiry or revocation, unless law requires longer.
+- You may request deletion where applicable; some records must be retained for security, audit, or legal reasons.
+
+7) Sharing and transfers
+- Service providers/subprocessors: used for hosting, storage, monitoring; bound by data protection terms.
+- Legal requests: disclosed when required by law.
+- International transfers: protected by appropriate safeguards (e.g., SCCs) where applicable.
+- We do not sell personal data.
+
+8) Your rights (subject to law)
+- Access, correction, deletion, restriction, portability, and objection.
+- Withdraw consent where processing relies on consent.
+- File a complaint with your supervisory authority.
+
+9) Security
+- Encryption in transit and at rest, least-privilege access, key management, audit logging, and continuous monitoring.
+- Incident response procedures and breach notification where required.
+
+
+10) Changes
+- We will update this notice as needed and post the latest effective date here.

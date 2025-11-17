@@ -13,7 +13,6 @@ from alembic import command
 from .api import api_router
 from .core.config import settings
 from .core.logging_config import logger
-from .api.endpoints.user_attributes import userattributes as versioned_userattributes
 from .api.dependencies import get_current_user_claims, get_db_dependency
 from .scripts.startup import insert_user_from_config
 from fastapi.staticfiles import StaticFiles
@@ -84,15 +83,6 @@ app.add_middleware(
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
-# For backwards compatibility, include a non-versioned route as well
-@app.get("/userattributes")
-async def legacy_userattributes(response: Response, request: Request):
-    """Legacy userattributes endpoint for backward compatibility"""
-
-    claims = await get_current_user_claims(request)
-    db = await anext(get_db_dependency()())
-
-    return await versioned_userattributes(request, claims, db)
 
 @app.get("/")
 async def root():

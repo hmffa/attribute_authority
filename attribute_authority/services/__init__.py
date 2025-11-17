@@ -1,1 +1,1 @@
-from .user_service import user_service
+from .attribute_service import user_service

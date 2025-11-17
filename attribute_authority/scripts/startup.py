@@ -4,11 +4,14 @@ from sqlalchemy.orm import Session
 import datetime
 
 from ..models.user import User
-from ..models.user_attribute import UserAttribute
+from ..models.attribute import UserAttribute
 from ..core.logging_config import logger
 from ..db.session import get_db
 
-def insert_user_from_config(config_path="../user_attributes_config.json", db: Session = next(get_db())):
+def insert_user_from_config(config_path=None, db: Session = next(get_db())):
+    if config_path is None:
+        config_path = os.path.join(os.path.dirname(__file__), "../user_attributes_config.json")
+        config_path = os.path.abspath(config_path)
     try:
         now = datetime.datetime.now(datetime.timezone.utc).isoformat()
         with open(config_path, "r") as f:

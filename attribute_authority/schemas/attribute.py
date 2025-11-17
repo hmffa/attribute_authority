@@ -1,20 +1,20 @@
 from typing import List
 from pydantic import BaseModel, Field
 
-class UserAttributeBase(BaseModel):
+class AttributeBase(BaseModel):
     key: str = Field(..., description="Attribute key", max_length=1024)
     value: str = Field(..., description="Attribute value", max_length=1024)
 
-class UserAttributeCreate(UserAttributeBase):
+class AttributeCreate(AttributeBase):
     user_id: int = Field(..., description="User ID")
     key: str = Field(..., description="Attribute key", max_length=1024)
     value: str = Field(..., description="Attribute value", max_length=1024)
 
-class UserAttributeUpdate(UserAttributeBase):
-    id: int = Field(..., description="User Attribute ID")
+class AttributeUpdate(AttributeBase):
+    id: int = Field(..., description="Attribute ID")
     user_id: int = Field(..., description="User ID")
 
-class UserAttribute(UserAttributeBase):
+class Attribute(AttributeBase):
     id: int
     user_id: int
 

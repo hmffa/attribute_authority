@@ -5,10 +5,10 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 import datetime
 
-from ..models.user_attribute import UserAttribute
-from ..schemas.user_attribute import UserAttributeCreate, UserAttributeUpdate
+from ..models.attribute import UserAttribute
+from ..schemas.attribute import UserAttributeCreate, UserAttributeUpdate
 
-class CRUDUserAttribute:
+class CRUDAttribute:
     @staticmethod
     async def get_by_user_id(db: AsyncSession, user_id: int) -> Optional[UserAttribute]:
         """
@@ -91,4 +91,4 @@ class CRUDUserAttribute:
         await db.delete(db_obj)
         await db.commit()
 
-crud_user_attribute = CRUDUserAttribute()
+crud_attribute = CRUDAttribute()

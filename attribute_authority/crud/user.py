@@ -8,6 +8,15 @@ from ..schemas.user import UserCreate, UserUpdate
 
 class CRUDUser:
     @staticmethod
+    async def get_all(db: AsyncSession) -> list[User]:
+        """
+        Get all users
+        """
+        query = select(User)
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
     async def get_by_sub_and_iss(db: AsyncSession, sub: str, iss: str) -> Optional[User]:
         """
         Get a user by subject identifier (sub) and issuer (iss)

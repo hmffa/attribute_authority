@@ -34,7 +34,7 @@ async def myattributes(
 
     logger.info(f"Processing myattributes request for sub: {claims.get('sub')}")
 
-    # Fetch user attributes using your existing service
+    # Fetch user attributes using your existing service # TODO refactor the service method name
     attributes = await attribute_service.get_attributes_with_user_id(db, claims)
 
     # TODO Use pydantic model for rendering template

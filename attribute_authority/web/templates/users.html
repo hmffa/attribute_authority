@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin • Users</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="/static/css/user_attributes.css" rel="stylesheet" />
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="userbar">
+        <div class="avatar" aria-hidden="true">
+          {% set initials = (claims.name or claims.email or 'A') | string %}
+          {{ initials.split(' ')[0][0] if ' ' in initials else initials[0] }}
+        </div>
+        <div class="user-info">
+          <h1>Admin • Users</h1>
+          <div class="user-meta">
+            {% if claims.name %}<div class="meta"><strong>Name:</strong> {{ claims.name }}</div>{% endif %}
+            {% if claims.email %}<div class="meta"><strong>Email:</strong> {{ claims.email }}</div>{% endif %}
+            {% if claims.sub %}<div class="meta"><strong>Sub:</strong> <span class="mono">{{ claims.sub }}</span></div>{% endif %}
+            {% if claims.iss %}<div class="meta"><strong>Issuer:</strong> <span class="mono">{{ claims.iss }}</span></div>{% endif %}
+          </div>
+        </div>
+        <div class="actions">
+          <a class="btn" href="/api/v1/auth/logout">Log out</a>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="attributes">
+        <div class="attributes-header">
+          <h2>Users</h2>
+          <div class="tools">
+            <div class="search">
+              <input type="search" id="user-search" placeholder="Filter users..." aria-label="Filter users" />
+            </div>
+            <div class="tool-buttons">
+              <span class="mono">Page {{ pagination.page }} of {{ pagination.page_count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <ul class="attr-list" id="users-list">
+          {% for user in users %}
+            <li class="attr-item">
+              <div class="attr-row">
+                <div class="attr-head">
+                  <div class="attr-key">
+                    <div><strong>{{ user.name or user.preferred_username or user.email or 'User' }}</strong></div>
+                    <div class="user-meta" style="margin: 4px 0 0;">
+                      {% if user.email %}<div class="meta"><strong>Email:</strong> {{ user.email }}</div>{% endif %}
+                      <div class="meta"><strong>Sub:</strong> <span class="mono">{{ user.sub }}</span></div>
+                      <div class="meta"><strong>Issuer:</strong> <span class="mono">{{ user.iss }}</span></div>
+                    </div>
+                  </div>
+                  <div class="attr-actions">
+                    <a class="btn btn-ghost" href="/api/v1/admin/users/{{ user.id }}/attributes" aria-label="View attributes">
+                      View attributes
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+
+        {% if not users %}
+          <div class="empty">No users found.</div>
+        {% endif %}
+
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+          <div class="mono">Total: {{ pagination.total }}</div>
+          <div class="tool-buttons">
+            {% set base_path = request.url.path %}
+            {% if pagination.has_prev %}
+              <a class="btn btn-ghost" href="{{ base_path }}?page={{ pagination.page - 1 }}">Previous</a>
+            {% else %}
+              <button class="btn btn-ghost" disabled>Previous</button>
+            {% endif %}
+            {% if pagination.has_next %}
+              <a class="btn btn-ghost" href="{{ base_path }}?page={{ pagination.page + 1 }}">Next</a>
+            {% else %}
+              <button class="btn btn-ghost" disabled>Next</button>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function() {
+      const input = document.getElementById('user-search');
+      const list = document.getElementById('users-list');
+      if (!input || !list) return;
+      input.addEventListener('input', () => {
+        const q = input.value.toLowerCase().trim();
+        for (const li of list.querySelectorAll('.attr-item')) {
+          const text = li.textContent.toLowerCase();
+          li.style.display = text.includes(q) ? '' : 'none';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

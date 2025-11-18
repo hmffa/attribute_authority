@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 import datetime
 
 from ..models.user import User
-from ..models.attribute import UserAttribute
+from ..models.attribute import Attribute
 from ..core.logging_config import logger
 from ..db.session import get_db
 

@@ -13,4 +13,4 @@ class User(Base):
     iss = Column(String(255), index=True)
     created_at = Column(String(50), nullable=False)
 
-    attributes = relationship("UserAttribute", back_populates="user", cascade="all, delete-orphan")
+    attributes = relationship("Attribute", back_populates="user", cascade="all, delete-orphan")

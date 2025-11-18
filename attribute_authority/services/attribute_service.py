@@ -41,20 +41,6 @@ class AttributeService:
             raise UserNotFoundError(f"Attribute with key '{key}' not found for user.")
         return result
     
-    @staticmethod
-    async def list_all_attributes(db: AsyncSession, offset: int = 0, limit: int = 1000):
-        """
-        List all user attributes across all users (admin).
-        """
-        return await crud_attribute.list_all(db, offset=offset, limit=limit)  # add in CRUD if missing
-    
-
-    @staticmethod
-    async def list_attributes(db: AsyncSession, user_id: int):
-        """
-        List attributes for a specific user (admin).
-        """
-        return await crud_attribute.get_by_user_id(db, user_id)
 
     @staticmethod
     async def attribute_key_counts(db: AsyncSession) -> List[Dict[str, Any]]:

@@ -2,5 +2,5 @@
 # imported by Alembic
 from .base_class import Base  # noqa
 from ..models.user import User  # noqa
-from ..models.attribute import UserAttribute  # noqa
+from ..models.attribute import Attribute  # noqa
 from ..models.invitation import Invitation  # noqa

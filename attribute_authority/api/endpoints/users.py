@@ -21,7 +21,7 @@ async def list_users(
 ):
     """
     Attribute Authority List Users Endpoint.
-    Return list of all users
+    Return list of all users and their information
     """
     current_url = request.url.path
     if not claims:
@@ -32,18 +32,11 @@ async def list_users(
     users = await crud_user.get_all(db)
     result = []
     for user in users:
-        attributes = await crud_attribute.get_by_user_id(db, user.id)
-        attr_dict = {}
-        for attr in attributes:
-            if attr.key not in attr_dict:
-                attr_dict[attr.key] = []
-            attr_dict[attr.key].append(attr.value)
-        result.append({
+        user_dict = {
+            "id": user.id,
             "sub": user.sub,
             "iss": user.iss,
-            "attributes": attr_dict
-        })
+            "created_at": user.created_at,
+        }
+        result.append(user_dict)
     return result
-
-
-

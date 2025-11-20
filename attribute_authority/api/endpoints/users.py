@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from math import ceil
 
-from ..dependencies import require_admin_claims, get_db_dependency, get_current_user_claims
+from ..dependencies import require_admin_claims, get_db_dependency, get_current_user_claims, optional_user_claims
 from ...crud.user import crud_user
 from ...crud.attribute import crud_attribute
 from ...services.attribute_service import attribute_service
@@ -20,7 +20,7 @@ router = APIRouter()
 async def list_users(
     request: Request,
     page: int = Query(1, ge=1),
-    claims: Dict[str, Any] = Depends(require_admin_claims),
+    claims: Dict[str, Any] = Depends(optional_user_claims), # TODO change in a way that only admins can access require_admin_claims
     db: AsyncSession = Depends(get_db_dependency()),
 ):
     """

@@ -5,6 +5,9 @@ from flaat import access_tokens
 from ..db.session import get_async_db
 from ..core.security import validate_token
 from ..core.config import settings
+from ..models.user import User
+from ..models.attribute_privilege_rule import PrivilegeAction
+from ..services.authorization import has_attribute_privilege
 
 async def get_current_user_claims(
     request: Request,
@@ -38,3 +41,31 @@ async def optional_user_claims(request: Request):
         return await validate_token(request)
     except HTTPException:
         return None
+    
+def require_attribute_privilege(action: PrivilegeAction):
+    async def dependency(
+        user_id: int,
+        attribute_key: str,
+        value: str | None = None,
+        current_user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db_dependency()),
+    ):
+        target_user = await db.get(User, user_id)
+        if not target_user:
+            raise HTTPException(status_code=404, detail="Target user not found")
+
+        allowed = await has_attribute_privilege(
+            db=db,
+            actor=current_user,
+            action=action,
+            attribute_key=attribute_key,
+            attribute_value=value,
+            target_user=target_user,
+        )
+        if not allowed:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not enough privilege to operate on this attribute",
+            )
+
+    return dependency

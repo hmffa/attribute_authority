@@ -4,6 +4,15 @@ Attribute Authority
 
 A sample AA
 
+Architecture Documentation
+--------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   architecture/attribute_authority_design
+
+
 Documentation
 -------------
 

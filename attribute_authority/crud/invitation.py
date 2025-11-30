@@ -11,7 +11,7 @@ class CRUDInvitation:
     @staticmethod
     async def create(db: AsyncSession, obj_in: InvitationCreate, creator_user_id: int) -> Invitation:
         """Create a new invitation"""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc) # TODO change to more efficient time handling
         
         # Generate a unique hash
         invitation_hash = secrets.token_urlsafe(32)

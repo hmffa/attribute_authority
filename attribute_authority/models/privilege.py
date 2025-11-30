@@ -55,7 +55,7 @@ class Privilege(Base):
     id = Column(Integer, primary_key=True, index=True)
     grantee_user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     action = Column(SAEnum(PrivilegeAction, name="privilege_action"), nullable=False)
-    attribute_id = Column(Integer, ForeignKey("attribute_definitions.id", ondelete="CASCADE"), nullable=True, index=True)
+    attribute_id = Column(Integer, ForeignKey("attributes.id", ondelete="CASCADE"), nullable=True, index=True)
     value_restriction = Column(Text, nullable=True)   # regex string or JSON schema reference
     target_restriction = Column(JSON, nullable=True)  # application-specific JSON filters
     is_delegable = Column(Boolean, nullable=False, default=False)
@@ -63,7 +63,7 @@ class Privilege(Base):
 
     # Relations
     grantee = relationship("User", back_populates="privileges", lazy="joined")
-    attribute = relationship("AttributeDefinition", lazy="joined")
+    attribute = relationship("Attribute", lazy="joined")
 
     __table_args__ = (
         # TODO add indexing later based in usage

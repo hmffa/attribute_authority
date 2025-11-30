@@ -1,15 +1,12 @@
-from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 
 class UserBase(BaseModel):
     """Base schema with shared User attributes"""
-    sub: str = Field(..., description="Subject identifier", max_length=255)
-    iss: str = Field(..., description="Issuer identifier", max_length=255)
-    attributes: Optional[List[str]] = Field(
-        None,
-        description="List of user attributes (e.g. URNs)"
-    )
+    sub: str = Field(..., description="OIDC subject identifier", max_length=255)
+    iss: str = Field(..., description="OIDC issuer identifier", max_length=255)
+    name: Optional[str] = Field(None, description="Display name")
+    email: Optional[EmailStr] = Field(None, description="Email address")
 
 class UserCreate(UserBase):
     """Schema for user creation"""
@@ -18,11 +15,10 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     """Schema for user updates"""
-    sub: Optional[str] = Field(None, description="Subject identifier", max_length=255)
-    iss: Optional[str] = Field(None, description="Issuer identifier", max_length=255)
-    attributes: Optional[List[str]] = Field(
-        None, description="List of user attributes (e.g. URNs)"
-    )
+    sub: Optional[str] = Field(None, description="OIDC subject identifier", max_length=255)
+    iss: Optional[str] = Field(None, description="OIDC issuer identifier", max_length=255)
+    name: Optional[str] = Field(None, description="Display name")
+    email: Optional[EmailStr] = Field(None, description="Email address")
 
 
 class UserInDBBase(UserBase):
@@ -43,9 +39,9 @@ class UserInDB(UserInDBBase):
 
 class UserOut(BaseModel):
     id: int
-    name: str | None = None
-    email: EmailStr | None = None
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
     sub: str
-    iss: str | None = None
-    created_at: datetime
+    iss: str
+    created_at: str
     model_config = ConfigDict(from_attributes=True)

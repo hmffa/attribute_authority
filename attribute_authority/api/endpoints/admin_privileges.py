@@ -7,7 +7,7 @@ from ..dependencies import get_db_dependency, require_admin_claims
 from ...crud.admin_role import crud_admin_role
 from ...crud.attribute_privilege_rule import crud_attribute_privilege_rule
 from ...crud.user import crud_user
-from ...schemas.admin import (
+from ...schemas.privilege import (
     AdminRoleCreate,
     AdminRoleRead,
     AdminRoleAssignmentBase,

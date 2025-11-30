@@ -5,7 +5,7 @@ from ..db.base_class import Base
 class Invitation(Base):
     id = Column(Integer, primary_key=True, index=True)
     hash = Column(String(255), unique=True, index=True, nullable=False)
-    created_by_user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     invited_user_sub = Column(String(1024), nullable=True)  # Optional: specific user sub
     invited_user_iss = Column(String(1024), nullable=True)  # Optional: specific user issuer
     group_key = Column(String(1024), nullable=False)

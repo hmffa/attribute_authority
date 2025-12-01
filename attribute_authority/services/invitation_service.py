@@ -96,7 +96,7 @@ class InvitationService:
         group_value = invitation.group_value
         try:
             # Add the attribute/group to the user
-            await crud_user_attribute.create(
+            await crud_attribute.create(
                 db, 
                 user_id=user.id,
                 key=invitation.group_key,

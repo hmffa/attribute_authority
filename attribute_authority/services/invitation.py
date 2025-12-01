@@ -11,7 +11,7 @@ from ..schemas.user import UserCreate
 from ..crud.user_attribute_value import crud_attribute
 from ..schemas.invitation import InvitationCreate, InvitationResponse
 from ..core.config import settings
-from .email_service import send_invitation_email
+from .email import send_invitation_email
 
 class InvitationService:
     @staticmethod

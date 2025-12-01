@@ -7,7 +7,7 @@ from ..core.security import validate_token
 from ..core.config import settings
 from ..models.user import User
 from ..models.attribute_privilege_rule import PrivilegeAction
-from ..services.authorization_service import has_attribute_privilege
+from ..services.authorization import has_attribute_privilege
 
 async def get_current_user_claims(
     request: Request,

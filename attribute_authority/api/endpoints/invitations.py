@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 from ..dependencies import get_current_user_claims, get_db_dependency, optional_user_claims
-from ...services.invitation_service import invitation_service
+from ...services.invitation import invitation_service
 from ...crud.invitation import crud_invitation
 from ...schemas.invitation import InvitationCreate, InvitationResponse, InvitationList, InvitationDetails
 from ...core.logging_config import logger

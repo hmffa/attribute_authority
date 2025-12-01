@@ -8,7 +8,7 @@ from ..dependencies import get_current_user_claims, get_db_dependency, optional_
 from ...schemas.attribute import AttributeMutation, AttributeCreate
 from ...crud.user_attribute_value import crud_attribute
 from ...crud.user import crud_user
-from ...services.attribute_service import attribute_service
+from ...services.attribute import attribute_service
 from ...core.logging_config import logger
 from ...web.templating import templates
 from ...schemas.user import UserCreate

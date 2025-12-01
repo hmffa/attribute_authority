@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, Any, List
 
 from ..crud.user import crud_user
-from ..crud.attribute import crud_attribute
+from ..crud.user_attribute_value import crud_attribute
 
 class UserNotFoundError(Exception):
     pass

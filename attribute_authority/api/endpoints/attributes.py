@@ -6,7 +6,7 @@ from tomlkit import key, value
 
 from ..dependencies import get_current_user_claims, get_db_dependency, optional_user_claims
 from ...schemas.attribute import AttributeMutation, AttributeCreate
-from ...crud.attribute import crud_attribute
+from ...crud.user_attribute_value import crud_attribute
 from ...crud.user import crud_user
 from ...services.attribute_service import attribute_service
 from ...core.logging_config import logger

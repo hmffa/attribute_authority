@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from ..crud.invitation import crud_invitation
 from ..crud.user import crud_user
 from ..schemas.user import UserCreate
-from ..crud.attribute import crud_attribute
+from ..crud.user_attribute_value import crud_attribute
 from ..schemas.invitation import InvitationCreate, InvitationResponse
 from ..core.config import settings
 from .email_service import send_invitation_email

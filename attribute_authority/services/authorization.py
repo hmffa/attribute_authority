@@ -6,7 +6,6 @@ from sqlalchemy.future import select
 from ..models.user import User
 from ..models.privilege import Privilege, PrivilegeAction
 from ..models.user_attribute_value import UserAttributeValue
-from ..models.attribute import Attribute
 
 class AuthorizationService:
     @staticmethod

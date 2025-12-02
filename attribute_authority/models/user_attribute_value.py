@@ -24,7 +24,6 @@ class UserAttributeValue(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     attribute_id = Column(Integer, ForeignKey("attributes.id", ondelete="CASCADE"), nullable=False, index=True)
     value = Column(Text, nullable=False)
-    source = Column(Text, nullable=True)  # optional: "self", "admin", "sync", "invitation", etc.
     created_at = Column(String(50), nullable=False)  # ISO format datetime
     updated_at = Column(String(50), nullable=False)  # ISO format datetime
 

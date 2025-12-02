@@ -7,7 +7,7 @@ from math import ceil
 from ..dependencies import require_admin_claims, get_db_dependency, get_current_user_claims, optional_user_claims
 from ...crud.user import crud_user
 from ...crud.user_attribute_value import crud_attribute
-from ...services.attribute import attribute_service
+from ...services.user_attribute_value import attribute_service
 from ...schemas.user import UserOut
 from ...core.logging_config import logger
 from ...web.templating import templates

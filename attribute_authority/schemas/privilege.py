@@ -16,7 +16,7 @@ class PrivilegeBase(BaseModel):
         None,
         description="Optional regex/schema restricting attribute values",
     )
-    target_restriction: Optional[Dict] = Field(
+    target_restriction: Optional[list[Dict]] = Field(
         None,
         description="Optional JSON constraints for target user",
     )
@@ -24,8 +24,7 @@ class PrivilegeBase(BaseModel):
 
 
 class PrivilegeCreate(PrivilegeBase):
-    created_at: str = Field(..., description="ISO timestamp when created")
-
+    pass
 
 class PrivilegeUpdate(BaseModel):
     action: Optional[PrivilegeAction] = None

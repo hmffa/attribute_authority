@@ -53,6 +53,7 @@ def insert_user_from_config(config_path=None, db: Session = next(get_db())):
                         PrivilegeAction.ADD_VALUE,
                         PrivilegeAction.SET_VALUE,
                         PrivilegeAction.REMOVE_VALUE,
+                        PrivilegeAction.DELETE_VALUE,
                         PrivilegeAction.READ_VALUE,
                         
                         PrivilegeAction.ASSIGN_PRIVILEGE  # <--- The "God Mode" permission

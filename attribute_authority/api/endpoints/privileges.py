@@ -13,7 +13,7 @@ router = APIRouter()
 @router.post("/privileges", response_model=PrivilegeRead)
 async def grant_privilege(
     privilege_in: PrivilegeCreate,
-    db: AsyncSession = Depends(get_db_dependency),
+    db: AsyncSession = Depends(get_db_dependency()),
     # Only superadmins with ASSIGN_PRIVILEGE can do this
     _ = Depends(require_privilege(PrivilegeAction.ASSIGN_PRIVILEGE))
 ):
@@ -47,6 +47,6 @@ async def grant_privilege(
         value_restriction=privilege_in.value_restriction,
         target_restriction=privilege_in.target_restriction,
         is_delegable=privilege_in.is_delegable,
-        created_at="now"
+        created_at="Now"  # Placeholder, will be set in CRUD
     )
     return await crud_privilege.create(db, db_obj)

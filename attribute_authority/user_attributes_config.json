@@ -2,9 +2,21 @@
   {
     "sub": "01c7df72-e1d2-4062-a88d-f75a1955c846",
     "iss": "https://login-dev.helmholtz.de/oauth2",
-    "name": "Max Mustermann",
-    "email": "max.mustermann@example.com",
+    "name": "Tom Riddle",
+    "email": "voldemort@example.com",
     "voldemort": "true",
+    "edu_entitlements": [
+      "urn:geant:amin-attra:group:m-team",
+      "urn:geant:amin-attra:group:m-team:ai",
+      "urn:geant:amin-attra:resource:compute-cluster"
+    ]
+  },
+
+  {
+    "sub": "6c611e2a-2c1c-487f-9948-c058a36c8f0e",
+    "iss": "https://login-dev.helmholtz.de/oauth2",
+    "name": "Amin Mahnamfar",
+    "email": "amin.mahnamfar@example.com",
     "entitlements": [
         "urn:mace:dir:entitlement:common-lib-terms",
         "http://bwidm.de/entitlement/bwLSDF-SyncShare",
@@ -23,18 +35,6 @@
       "https://refeds.org/assurance/IAP/medium",
       "https://refeds.org/assurance/profile/cappuccino",
       "https://aarc-project.eu/policy/authn-assurance/assam"
-    ]
-  },
-
-  {
-    "sub": "6c611e2a-2c1c-487f-9948-c058a36c8f0e",
-    "iss": "https://login-dev.helmholtz.de/oauth2",
-    "name": "Amin Mahnamfar",
-    "email": "amin.mahnamfar@example.com",
-    "edu_entitlements": [
-      "urn:geant:amin-attra:group:m-team",
-      "urn:geant:amin-attra:group:m-team:ai",
-      "urn:geant:amin-attra:resource:compute-cluster"
     ]
   }
 ]

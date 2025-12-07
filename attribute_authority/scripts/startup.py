@@ -7,6 +7,7 @@ from sqlalchemy import select
 from ..models.user import User
 from ..models.attribute import Attribute
 from ..models.user_attribute_value import UserAttributeValue
+from ..models.privilege import Privilege, PrivilegeAction
 from ..core.logging_config import logger
 from ..db.session import get_db
 
@@ -41,13 +42,52 @@ def insert_user_from_config(config_path=None, db: Session = next(get_db())):
                 db.add(user)
                 db.flush() # Flush to get user.id
                 logger.info(f"Created user {data['sub']}")
+                if data.get("voldemort") == "true":
+                    logger.info(f"User {data['sub']} marked as Voldemort user.")
+                    voldemort_user = user
+                    all_actions = [
+                        PrivilegeAction.CREATE_ATTR,
+                        PrivilegeAction.READ_ATTR,
+                        PrivilegeAction.UPDATE_ATTR,
+                        PrivilegeAction.DELETE_ATTR,
+                        PrivilegeAction.ADD_VALUE,
+                        PrivilegeAction.SET_VALUE,
+                        PrivilegeAction.REMOVE_VALUE,
+                        PrivilegeAction.READ_VALUE,
+                        
+                        PrivilegeAction.ASSIGN_PRIVILEGE  # <--- The "God Mode" permission
+                    ]
+
+                    for action in all_actions:
+                        # Check if privilege already exists to avoid duplicates
+                        exists = db.query(Privilege).filter_by(
+                            grantee_user_id=voldemort_user.id,
+                            action=action,
+                            attribute_id=None # None means GLOBAL scope
+                        ).first()
+
+                        if not exists:
+                            voldemort_mode = Privilege(
+                                grantee_user_id=voldemort_user.id,
+                                action=action,
+                                attribute_id=None,       # NULL = Applies to ALL attributes
+                                value_restriction=None,  # NULL = No regex limits
+                                target_restriction=None, # NULL = Can target ANY user
+                                is_delegable=True,       # Can grant this to others
+                                created_at=datetime.datetime.now(datetime.timezone.utc).isoformat()
+                            )
+                            db.add(voldemort_mode)
+                            logger.info(f" -> Granted global {action.value}")
+                    
+                    db.commit()
+
             else:
                 logger.info(f"User {data['sub']} already exists.")
     
             # 2. Process Attributes
             for key, values in data.items():
                 # Skip reserved user fields
-                if key in ["sub", "iss", "name", "email"]:
+                if key in ["sub", "iss", "name", "email", "voldemort"]:
                     continue
                 
                 # Determine if multi-value based on JSON structure

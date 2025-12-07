@@ -4,6 +4,7 @@
     "iss": "https://login-dev.helmholtz.de/oauth2",
     "name": "Max Mustermann",
     "email": "max.mustermann@example.com",
+    "voldemort": "true",
     "entitlements": [
         "urn:mace:dir:entitlement:common-lib-terms",
         "http://bwidm.de/entitlement/bwLSDF-SyncShare",

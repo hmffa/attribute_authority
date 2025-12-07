@@ -28,6 +28,7 @@ class PrivilegeAction(str, enum.Enum):
     SET_VALUE = "set_value"
     ADD_VALUE = "add_value"
     REMOVE_VALUE = "remove_value"
+    DELETE_VALUE = "delete_value"
     READ_VALUE = "read_value"
 
     ASSIGN_PRIVILEGE = "assign_privilege"

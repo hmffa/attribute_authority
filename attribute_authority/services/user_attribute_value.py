@@ -35,8 +35,7 @@ class UserAttributeValueService:
             attr_name = uv.attribute_definition.name
             result[attr_name].append({
                 "id": uv.id,
-                "value": uv.value,
-                "source": uv.source
+                "value": uv.value
             })
 
         return result

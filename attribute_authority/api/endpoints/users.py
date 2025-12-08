@@ -18,7 +18,7 @@ router = APIRouter()
 async def list_users(
     request: Request,
     page: int = Query(1, ge=1),
-    claims: Dict[str, Any] = Depends(optional_user_claims), # TODO change in a way that only admins can access require_admin_claims
+    claims: Dict[str, Any] = Depends(optional_user_claims), # TODO change in a way that users can access here based on privileges (Can all users list other users?)
     db: AsyncSession = Depends(get_db_dependency()),
 ):
     """

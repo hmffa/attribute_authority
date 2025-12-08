@@ -1,9 +1,11 @@
 from fastapi import HTTPException, Request, Depends, status, Path
 from typing import Dict, Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
+from flaat import access_tokens
 
 from ..db.session import get_async_db
 from ..core.security import validate_token
+from ..core.config import settings
 from ..models.user import User
 from ..models.privilege import PrivilegeAction
 from ..services.authorization import authorization_service
@@ -79,9 +81,16 @@ def require_privilege(action: PrivilegeAction):
 
     return dependency
 
-# Helper for optional login (e.g. public pages or self-service)
 async def optional_user_claims(request: Request):
+    """
+    Try to validate token but don't raise exception if not present.
+    First, use cookie-stored id_token (set during login callback).
+    """
+    id_token = request.session.get("id_token")
+    if id_token:
+        token_info = access_tokens.get_access_token_info(id_token, verify=settings.ENVIRONMENT == "production")
+        return token_info.body
     try:
         return await validate_token(request)
-    except:
+    except HTTPException:
         return None

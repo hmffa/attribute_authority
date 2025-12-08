@@ -2,8 +2,7 @@ import json
 import os
 import datetime
 from sqlalchemy.orm import Session
-from sqlalchemy import select
-
+import aarc_entitlement
 from ..models.user import User
 from ..models.attribute import Attribute
 from ..models.user_attribute_value import UserAttributeValue
@@ -80,7 +79,7 @@ def insert_user_from_config(config_path=None, db: Session = next(get_db())):
                             db.add(voldemort_mode)
                             logger.info(f" -> Granted global {action.value}")
                     
-                    db.commit()
+                    # db.commit()
 
             else:
                 logger.info(f"User {data['sub']} already exists.")
@@ -91,16 +90,22 @@ def insert_user_from_config(config_path=None, db: Session = next(get_db())):
                 if key in ["sub", "iss", "name", "email", "voldemort"]:
                     continue
                 
-                # Determine if multi-value based on JSON structure
                 is_list = isinstance(values, list)
                 raw_values = values if is_list else [values]
                 
+                # TODO Some attributes can have both single and multi values?
+                try:
+                    test = aarc_entitlement.G069(raw_values[0])
+                    # sample = aarc_entitlement.G002(raw_values[0], strict=True)
+                    is_multivalue = True
+                except aarc_entitlement.ParseError:
+                    is_multivalue = False
                 # 3. Get or Create Attribute Definition (Schema)
                 attr_def = db.query(Attribute).filter_by(name=key).first()
                 if not attr_def:
                     attr_def = Attribute(
                         name=key,
-                        is_multivalue=True, # Default to true for mock data flexbility
+                        is_multivalue=is_multivalue,
                         description=f"Auto-generated from startup script",
                         enabled=True,
                         created_at=now

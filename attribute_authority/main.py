@@ -21,7 +21,7 @@ from pathlib import Path
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME}")
-    insert_user_from_config() # TODO populate DB from config automatically
+    # insert_user_from_config() # TODO populate DB from config automatically
     yield
     logger.info(f"Shutting down {settings.APP_NAME}")
 

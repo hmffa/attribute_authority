@@ -18,7 +18,7 @@ class AuthorizationService:
         attribute_id: Optional[int] = None,
         value: Optional[str] = None,
     ) -> bool:
-        # 1. Fetch privileges via CRUD (No SQL here)
+        # 1. Fetch privileges
         privileges = await crud_privilege.get_by_grantee_and_action(
             db, 
             user_id=actor.id, 

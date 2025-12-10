@@ -31,7 +31,9 @@ class UserService:
         actor: User
     ) -> List[UserWithAttributes]:
         """
-        Fetches all users and filters their attributes based on the actor's READ privileges.
+        Fetches all users and filters them based on the actor's READ privileges.
+        If the actor cannot see any attributes for a user (due to lack of privilege 
+        or target_restrictions), that user is excluded from the list.
         """
         # 1. Fetch all users
         users = await crud_user.get_all(db)
@@ -55,17 +57,17 @@ class UserService:
                     attr_name = user_attr.attribute_definition.name
                     visible_attributes[attr_name].append(user_attr.value)
 
-
-            user_out = UserWithAttributes(
-                id=target_user.id,
-                sub=target_user.sub,
-                iss=target_user.iss,
-                name=target_user.name,
-                email=target_user.email,
-                created_at=target_user.created_at,
-                attributes=visible_attributes
-            )
-            results.append(user_out)
+            if visible_attributes:
+                user_out = UserWithAttributes(
+                    id=target_user.id,
+                    sub=target_user.sub,
+                    iss=target_user.iss,
+                    name=target_user.name,
+                    email=target_user.email,
+                    created_at=target_user.created_at,
+                    attributes=visible_attributes
+                )
+                results.append(user_out)
 
         return results
 

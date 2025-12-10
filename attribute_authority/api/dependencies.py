@@ -93,22 +93,3 @@ async def optional_user_claims(request: Request):
     except HTTPException:
         return None
 
-async def get_current_actor(
-    claims: Dict[str, Any] = Depends(get_current_user_claims),
-    db: AsyncSession = Depends(get_async_db)
-) -> User:
-    """
-    Resolves the caller (Actor) from the OIDC token claims into a database User object.
-    """
-    sub = claims.get("sub")
-    iss = claims.get("iss")
-    
-    if not sub or not iss:
-        raise HTTPException(status_code=401, detail="Invalid token claims")
-
-    user = await crud_user.get_by_sub_and_iss(db, sub, iss)
-    if not user:
-        # If user doesn't exist in DB, they have no privileges.
-        raise HTTPException(status_code=401, detail="User not registered in AA")
-        
-    return user

@@ -15,8 +15,6 @@ from ..crud.attribute_definition import crud_attribute_definition
 async def get_current_user_claims(request: Request) -> Dict[str, Any]:
     return await validate_token(request)
 
-def get_db_dependency():
-    return get_async_db
 
 async def get_current_actor(
     claims: Dict[str, Any] = Depends(get_current_user_claims),
@@ -97,7 +95,7 @@ async def optional_user_claims(request: Request):
 
 async def get_current_actor(
     claims: Dict[str, Any] = Depends(get_current_user_claims),
-    db: AsyncSession = Depends(get_db_dependency)
+    db: AsyncSession = Depends(get_async_db)
 ) -> User:
     """
     Resolves the caller (Actor) from the OIDC token claims into a database User object.

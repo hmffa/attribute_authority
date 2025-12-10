@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db_dependency, require_privilege
+from ..dependencies import require_privilege
+from ...db.session import get_async_db
 from ...services.privilege import privilege_service
 from ...schemas.privilege import PrivilegeCreate, PrivilegeRead
 from ...models.privilege import PrivilegeAction
@@ -13,7 +14,7 @@ router = APIRouter()
 @router.post("/privileges", response_model=PrivilegeRead)
 async def grant_privilege(
     privilege_in: PrivilegeCreate,
-    db: AsyncSession = Depends(get_db_dependency()),
+    db: AsyncSession = Depends(get_async_db),
     # Only superadmins with ASSIGN_PRIVILEGE can do this
     _ = Depends(require_privilege(PrivilegeAction.ASSIGN_PRIVILEGE))
 ):

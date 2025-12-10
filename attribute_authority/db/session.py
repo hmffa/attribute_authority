@@ -20,6 +20,7 @@ async_engine = create_async_engine(
     sqlalchemy_database_uri.replace("postgresql://", "postgresql+asyncpg://"),
     echo=False,
     future=True,
+    pool_pre_ping=True
 )
 AsyncSessionLocal = sessionmaker(
     async_engine, class_=AsyncSession, expire_on_commit=False
@@ -36,4 +37,7 @@ def get_db():
 # Async dependency to get DB session
 async def get_async_db():
     async with AsyncSessionLocal() as session:
-        yield session
+        try:
+            yield session
+        finally:
+            await session.close()

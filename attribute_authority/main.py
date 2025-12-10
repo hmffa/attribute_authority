@@ -13,7 +13,8 @@ from alembic import command
 from .api import api_router
 from .core.config import settings
 from .core.logging_config import logger
-from .api.dependencies import get_current_user_claims, get_db_dependency
+from .api.dependencies import get_current_user_claims
+from .db.session import get_async_db
 from .scripts.startup import insert_user_from_config
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path

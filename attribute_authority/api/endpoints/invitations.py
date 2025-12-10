@@ -6,7 +6,8 @@ import os
 from datetime import datetime
 
 
-from ..dependencies import get_current_user_claims, get_db_dependency, optional_user_claims
+from ..dependencies import get_current_user_claims, optional_user_claims
+from ...db.session import get_async_db
 from ...services.invitation import invitation_service
 from ...crud.invitation import crud_invitation
 from ...schemas.invitation import InvitationCreate, InvitationResponse, InvitationList, InvitationDetails
@@ -21,7 +22,7 @@ router = APIRouter()
 async def create_invitation(
     invitation: InvitationCreate,
     claims: Dict[str, Any] = Depends(get_current_user_claims),
-    db: AsyncSession = Depends(get_db_dependency())
+    db: AsyncSession = Depends(get_async_db)
 ):
     logger.info(f"User {claims.get('sub')} creating invitation")
     return await invitation_service.create_invitation(db, invitation, claims)
@@ -29,7 +30,7 @@ async def create_invitation(
 @router.get("/invitations", response_model=InvitationList)
 async def list_invitations(
     claims: Dict[str, Any] = Depends(get_current_user_claims),
-    db: AsyncSession = Depends(get_db_dependency())
+    db: AsyncSession = Depends(get_async_db)
 ):
     """List all invitations created by current user"""
     sub = claims.get("sub")
@@ -48,7 +49,7 @@ async def show_invitation_page(
     invitation_hash: str,
     request: Request,
     claims: Dict[str, Any] = Depends(optional_user_claims),
-    db: AsyncSession = Depends(get_db_dependency())
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Show invitation acceptance page (HTML)"""
     invitation = await crud_invitation.get_by_hash(db, invitation_hash)
@@ -86,7 +87,7 @@ async def confirm_invitation(
     request: Request,
     action: str = Form(...),  # "accept" or "reject"
     claims: Dict[str, Any] = Depends(optional_user_claims),
-    db: AsyncSession = Depends(get_db_dependency())
+    db: AsyncSession = Depends(get_async_db)
 ):
     if not claims:
         return RedirectResponse(
@@ -124,7 +125,7 @@ async def show_invitation_page(
     invitation_hash: str,
     request: Request,
     claims: Dict[str, Any] = Depends(optional_user_claims),
-    db: AsyncSession = Depends(get_db_dependency())
+    db: AsyncSession = Depends(get_async_db)
 ):
     """Show invitation page with QR code and details"""
     invitation = await crud_invitation.get_by_hash(db, invitation_hash)

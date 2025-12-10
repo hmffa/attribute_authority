@@ -12,8 +12,8 @@ from flaat import access_tokens
 
 
 from ...core.config import settings
+from ...db.session import get_async_db
 from ...core.logging_config import logger
-from ..dependencies import get_db_dependency
 from ...crud.user import crud_user
 from ...schemas.user import UserCreate
 from ...web.templating import templates
@@ -99,7 +99,7 @@ async def authorize(request: Request, provider: str, next: Optional[str] = Query
 async def oidc_callback(
     request: Request, 
     provider: str,
-    db: AsyncSession = Depends(get_db_dependency())
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     Handle the OIDC callback after user authentication.

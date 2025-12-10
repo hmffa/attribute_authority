@@ -4,7 +4,8 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from math import ceil
 
-from ..dependencies import get_db_dependency, optional_user_claims, get_current_actor
+from ..dependencies import optional_user_claims, get_current_actor
+from ...db.session import get_async_db
 from ...crud.user import crud_user
 from ...models.user import User
 from ...schemas.user import UserOut, UserWithAttributes
@@ -21,7 +22,7 @@ async def list_users(
     request: Request,
     page: int = Query(1, ge=1),
     claims: Dict[str, Any] = Depends(optional_user_claims), # TODO change in a way that users can access here based on privileges (Can all users list other users?)
-    db: AsyncSession = Depends(get_db_dependency()),
+    db: AsyncSession = Depends(get_async_db),
 ):
     """
     Attribute Authority List Users Endpoint (Admin UI).
@@ -66,7 +67,7 @@ async def list_users(
 
 @router.get("/users/allattributes", response_model=List[UserWithAttributes])
 async def get_all_users_attributes(
-    db: AsyncSession = Depends(get_db_dependency),
+    db: AsyncSession = Depends(get_async_db),
     actor: User = Depends(get_current_actor)
 ):
     """

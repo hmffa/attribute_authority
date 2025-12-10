@@ -2,7 +2,8 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db_dependency, require_privilege
+from ..dependencies import require_privilege
+from ...db.session import get_async_db
 from ...schemas.attribute import AttributeCreate, AttributeRead, AttributeUpdate
 from ...services.attribute_definition import attribute_definition_service
 from ...crud.attribute_definition import crud_attribute_definition
@@ -13,7 +14,7 @@ router = APIRouter()
 @router.post("/definitions", response_model=AttributeRead)
 async def create_attribute_definition(
     obj_in: AttributeCreate,
-    db: AsyncSession = Depends(get_db_dependency),
+    db: AsyncSession = Depends(get_async_db),
     _ = Depends(require_privilege(PrivilegeAction.CREATE_ATTR))
 ):
     """
@@ -23,7 +24,7 @@ async def create_attribute_definition(
 
 @router.get("/definitions", response_model=List[AttributeRead])
 async def list_attribute_definitions(
-    db: AsyncSession = Depends(get_db_dependency),
+    db: AsyncSession = Depends(get_async_db),
     # READ_ATTR privilege might be required, or public? Assuming protected:
     _ = Depends(require_privilege(PrivilegeAction.READ_ATTR))
 ):
@@ -32,7 +33,7 @@ async def list_attribute_definitions(
 @router.get("/definitions/{name}", response_model=AttributeRead)
 async def get_attribute_definition(
     name: str,
-    db: AsyncSession = Depends(get_db_dependency),
+    db: AsyncSession = Depends(get_async_db),
     _ = Depends(require_privilege(PrivilegeAction.READ_ATTR))
 ):
     attr = await crud_attribute_definition.get_by_name(db, name)

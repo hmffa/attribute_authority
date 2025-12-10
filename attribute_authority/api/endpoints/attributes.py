@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_db_dependency, get_current_user_claims, require_privilege
+from ..dependencies import get_current_user_claims, require_privilege
+from ...db.session import get_async_db
 from ...services.user_attribute_value import user_attribute_value_service
 from ...models.privilege import PrivilegeAction
 from ...schemas.user_attribute_value import UserAttributeValueRead
@@ -14,7 +15,7 @@ router = APIRouter()
 @router.get("/user/myattributes")
 async def read_my_attributes(
     claims: Dict[str, Any] = Depends(get_current_user_claims),
-    db: AsyncSession = Depends(get_db_dependency())
+    db: AsyncSession = Depends(get_async_db)
 ):
     """
     Get logged-in user's own attributes.
@@ -31,7 +32,7 @@ async def add_user_attribute_value(
     user_id: int,
     attribute_name: str,
     value: str = Body(..., embed=True), # Expects JSON: {"value": "foo"}
-    db: AsyncSession = Depends(get_db_dependency()),
+    db: AsyncSession = Depends(get_async_db),
     # Check Privilege: ADD_VALUE
     _ = Depends(require_privilege(PrivilegeAction.ADD_VALUE)) 
 ):
@@ -51,7 +52,7 @@ async def add_user_attribute_value(
 async def remove_user_attribute_value(
     user_id: int,
     value_id: int,
-    db: AsyncSession = Depends(get_db_dependency()),
+    db: AsyncSession = Depends(get_async_db),
     # Check Privilege: REMOVE_VALUE
     _ = Depends(require_privilege(PrivilegeAction.REMOVE_VALUE))
 ):

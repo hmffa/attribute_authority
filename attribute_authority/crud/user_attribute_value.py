@@ -13,6 +13,12 @@ class CRUDUserAttributeValue:
         query = select(UserAttributeValue).where(UserAttributeValue.user_id == user_id)
         result = await db.execute(query)
         return result.scalars().all()
+    
+    @staticmethod
+    async def get_all_with_users_and_attributes(db: AsyncSession) -> List[UserAttributeValue]:
+        query = select(UserAttributeValue)
+        result = await db.execute(query)
+        return result.scalars().all()
 
     @staticmethod
     async def create(

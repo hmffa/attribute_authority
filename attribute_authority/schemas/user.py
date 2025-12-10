@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Any
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 
 class UserBase(BaseModel):
@@ -45,3 +45,10 @@ class UserOut(BaseModel):
     iss: str
     created_at: str
     model_config = ConfigDict(from_attributes=True)
+
+class UserWithAttributes(UserOut):
+    """
+    User details combined with a dictionary of their visible attributes.
+    Format: { "attribute_name": ["value1", "value2"] }
+    """
+    attributes: dict[str, list[Any]] = {}

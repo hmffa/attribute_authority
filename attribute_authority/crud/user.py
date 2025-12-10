@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import List, Optional
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 import datetime
@@ -15,6 +16,18 @@ class CRUDUser:
         query = select(User)
         result = await db.execute(query)
         return result.scalars().all()
+    
+    @staticmethod
+    async def list(db: AsyncSession, offset: int = 0, limit: int = 100) -> List[User]:
+        query = select(User).offset(offset).limit(limit)
+        result = await db.execute(query)
+        return result.scalars().all()
+    
+    @staticmethod
+    async def count(db: AsyncSession) -> int:
+        query = select(func.count(User.id))
+        result = await db.execute(query)
+        return result.scalar_one()
     
     @staticmethod
     async def get_by_sub_and_iss(db: AsyncSession, sub: str, iss: str) -> Optional[User]:

@@ -39,6 +39,25 @@ class UserAttributeValueService:
             })
 
         return result
+    
+    @staticmethod
+    async def get_all_user_attributes(db: AsyncSession) -> Dict[int, Dict[str, List[Any]]]:
+        """
+        Returns a dictionary of {user_id: {attribute_name: [list of values]}}
+        based on the privilege the requester has.
+        """
+        all_values = await crud_user_attribute_value.get_all_with_users_and_attributes(db)
+
+        result = defaultdict(lambda: defaultdict(list))
+        for uv in all_values:
+            user_id = uv.user_id
+            attr_name = uv.attribute_definition.name
+            result[user_id][attr_name].append({
+                "id": uv.id,
+                "value": uv.value
+            })
+
+        return result
 
     @staticmethod
     async def add_value(

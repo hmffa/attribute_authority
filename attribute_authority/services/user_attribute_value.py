@@ -9,6 +9,11 @@ from ..crud.user import crud_user
 from ..crud.user_attribute_value import crud_user_attribute_value
 from ..crud.attribute_definition import crud_attribute_definition
 from ..schemas.user_attribute_value import UserAttributeValueCreate
+from ..models.user import User
+from ..services.authorization import authorization_service
+from ..services.attribute_definition import attribute_definition_service
+from ..models.privilege import PrivilegeAction
+
 
 class UserNotFoundError(Exception):
     pass
@@ -65,44 +70,41 @@ class UserAttributeValueService:
         target_user_id: int, 
         attribute_name: str, 
         value: str,
-        source: str = "manual"
+        actor: User
     ):
         """
         Adds a value to a user, enforcing Schema rules (Multi-value & Regex).
         """
-        # 1. Get the Attribute Definition (Schema)
-        definition = await crud_attribute_definition.get_by_name(db, attribute_name)
-        if not definition:
-            raise HTTPException(status_code=404, detail=f"Attribute '{attribute_name}' is not defined in the schema.")
-
-        if not definition.enabled:
-            raise HTTPException(status_code=400, detail=f"Attribute '{attribute_name}' is currently disabled.")
-
-        # 2. Check Regex Restriction
-        if definition.value_restriction:
-            if not re.match(definition.value_restriction, value):
-                raise HTTPException(
-                    status_code=400, 
-                    detail=f"Value '{value}' does not match the required pattern for '{attribute_name}'."
+        target_user = await crud_user.get(db, target_user_id)
+        attribute = await attribute_definition_service.get_by_name(db, attribute_name)
+        is_allowed = await authorization_service.has_privilege(
+                    db,
+                    actor=actor,
+                    action=PrivilegeAction.ADD_VALUE,
+                    target_user=target_user,
+                    attribute_id=attribute.id,
+                    value=value
                 )
+        if not is_allowed:
+            raise HTTPException(status_code=403, detail="Not authorized to add this attribute value.")
+        
 
         # 3. Check Multi-Value Constraint
-        if not definition.is_multivalue:
+        if not attribute.is_multivalue:
             # If not multi-value, check if user already has a value
-            existing = await crud_user_attribute_value.get_by_user_and_attr_id(db, target_user_id, definition.id)
+            existing = await crud_user_attribute_value.get_by_user_and_attr_id(db, target_user_id, attribute.id)
             if existing:
                 raise HTTPException(
                     status_code=400, 
-                    detail=f"Attribute '{attribute_name}' is single-value and already has a value."
+                    detail=f"Attribute '{attribute_name}' is single-value and cannot add a value."
                 )
 
         # 4. Create the Value
         return await crud_user_attribute_value.create(
             db, 
             user_id=target_user_id, 
-            attribute_id=definition.id, 
-            value=value,
-            source=source
+            attribute_id=attribute.id, 
+            value=value
         )
 
     @staticmethod

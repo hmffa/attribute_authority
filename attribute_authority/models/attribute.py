@@ -24,7 +24,7 @@ class Attribute(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)            # business name of attribute
     is_multivalue = Column(Boolean, nullable=False, default=True)
-    value_restriction = Column(Text, nullable=True)       # recommended: store regex or JSON schema
+    value_restriction = Column(Text, nullable=True) # TODO Should it be called key restriction       # recommended: store regex or JSON schema
     description = Column(Text, nullable=True)
     enabled = Column(Boolean, nullable=False, default=True)
     created_at = Column(String(50), nullable=False)  # ISO format datetime

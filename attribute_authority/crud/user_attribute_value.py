@@ -25,14 +25,12 @@ class CRUDUserAttributeValue:
         db: AsyncSession, 
         user_id: int, 
         attribute_id: int, 
-        value: str, 
-        source: str = "manual"
+        value: str
     ) -> UserAttributeValue:
         db_obj = UserAttributeValue(
             user_id=user_id,
             attribute_id=attribute_id,
             value=value,
-            source=source,
             created_at="now", # TODO: Use real timestamp
             updated_at="now"
         )
@@ -40,6 +38,23 @@ class CRUDUserAttributeValue:
         await db.commit()
         await db.refresh(db_obj)
         return db_obj
+    
+    @staticmethod
+    async def add(
+        db: AsyncSession, 
+        user_id: int, 
+        attribute_id: int, 
+        value: str
+    ) -> UserAttributeValue:
+        query = select(UserAttributeValue).where(
+            UserAttributeValue.user_id == user_id,
+            UserAttributeValue.attribute_id == attribute_id,
+            UserAttributeValue.value == value
+        )
+        result = await db.execute(query)
+        db_obj = result.scalar_one_or_none()
+        
+    
 
     @staticmethod
     async def delete(db: AsyncSession, id: int) -> None:

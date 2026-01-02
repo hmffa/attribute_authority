@@ -11,5 +11,12 @@ class AttributeDefinitionService:
         if exists:
             raise HTTPException(status_code=400, detail="Attribute already exists")
         return await crud_attribute_definition.create(db, obj_in)
+    
+    @staticmethod
+    async def get_by_name(db: AsyncSession, name: str):
+        attribute = await crud_attribute_definition.get_by_name(db, name)
+        if not attribute:
+            raise HTTPException(status_code=404, detail="Attribute not found")
+        return attribute
 
 attribute_definition_service = AttributeDefinitionService()

@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, Body
 from typing import Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..dependencies import get_current_user_claims, require_privilege
+from ..dependencies import get_current_user_claims, require_privilege, get_current_actor
 from ...db.session import get_async_db
 from ...services.user_attribute_value import user_attribute_value_service
 from ...models.privilege import PrivilegeAction
 from ...schemas.user_attribute_value import UserAttributeValueRead
+from ...models.user import User
+
 
 router = APIRouter()
 
@@ -33,8 +35,7 @@ async def add_user_attribute_value(
     attribute_name: str,
     value: str = Body(..., embed=True), # Expects JSON: {"value": "foo"}
     db: AsyncSession = Depends(get_async_db),
-    # Check Privilege: ADD_VALUE
-    _ = Depends(require_privilege(PrivilegeAction.ADD_VALUE)) 
+    actor: User = Depends(get_current_actor)
 ):
     """
     Add a value to a specific user's attribute. 
@@ -45,7 +46,7 @@ async def add_user_attribute_value(
         target_user_id=user_id, 
         attribute_name=attribute_name, 
         value=value,
-        source="admin_api"
+        actor=actor
     )
 
 @router.delete("/users/{user_id}/values/{value_id}")

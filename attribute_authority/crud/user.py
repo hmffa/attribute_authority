@@ -18,6 +18,15 @@ class CRUDUser:
         return result.scalars().all()
     
     @staticmethod
+    async def get(db: AsyncSession, id: int) -> Optional[User]:
+        """
+        Get a user by ID
+        """
+        query = select(User).where(User.id == id)
+        result = await db.execute(query)
+        return result.scalars().first()
+    
+    @staticmethod
     async def list(db: AsyncSession, offset: int = 0, limit: int = 100) -> List[User]:
         query = select(User).offset(offset).limit(limit)
         result = await db.execute(query)

@@ -1,73 +1,71 @@
-from fastapi import APIRouter, Depends, Request, HTTPException, status, Response, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
-from typing import Dict, Any, List
-from sqlalchemy.ext.asyncio import AsyncSession
-import os
+"""Invitation endpoints."""
 from datetime import datetime
+from typing import Any, Dict, List
 
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..dependencies import get_current_user_claims, optional_user_claims
 from ...db.session import get_async_db
-from ...services.invitation import invitation_service
-from ...crud.invitation import crud_invitation
-from ...schemas.invitation import InvitationCreate, InvitationResponse, InvitationList, InvitationDetails
-from ...core.logging_config import logger
-from ...crud.user import crud_user
+from ...schemas.invitation import InvitationCreate, InvitationList, InvitationResponse
+from ...services import invitation as invitations
+from ...services import user as users
 from ...web.templating import templates
 
-
 router = APIRouter()
+
 
 @router.post("/invitations", response_model=InvitationResponse)
 async def create_invitation(
     invitation: InvitationCreate,
     claims: Dict[str, Any] = Depends(get_current_user_claims),
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
 ):
-    logger.info(f"User {claims.get('sub')} creating invitation")
-    return await invitation_service.create_invitation(db, invitation, claims)
+    """Create a new invitation."""
+    return await invitations.create_invitation(db, invitation, claims)
+
 
 @router.get("/invitations", response_model=InvitationList)
 async def list_invitations(
     claims: Dict[str, Any] = Depends(get_current_user_claims),
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
 ):
-    """List all invitations created by current user"""
+    """List all invitations created by current user."""
     sub = claims.get("sub")
     iss = claims.get("iss")
 
-    
-    user = await crud_user.get_by_sub_and_iss(db, sub, iss)
+    user = await users.get_by_sub_and_iss(db, sub, iss)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    invitations = await crud_invitation.list_by_creator(db, user.id)
-    return InvitationList(invitations=invitations)
+
+    invitation_list = await invitations.list_by_creator(db, user.id)
+    return InvitationList(invitations=invitation_list)
+
 
 @router.get("/invitations/{invitation_hash}/accept", response_class=HTMLResponse)
-async def show_invitation_page(
+async def show_invitation_accept_page(
     invitation_hash: str,
     request: Request,
     claims: Dict[str, Any] = Depends(optional_user_claims),
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
 ):
-    """Show invitation acceptance page (HTML)"""
-    invitation = await crud_invitation.get_by_hash(db, invitation_hash)
+    """Show invitation acceptance page (HTML)."""
+    invitation = await invitations.get_by_hash(db, invitation_hash)
     if not invitation:
         return HTMLResponse(content="<html><body><h1>Invalid invitation</h1></body></html>")
-    
-    # Check if invitation is valid
-    is_valid = await crud_invitation.check_invitation_valid(invitation)
-    if not is_valid:
-        return HTMLResponse(content="<html><body><h1>This invitation has expired or already been used</h1></body></html>")
-    
-    # If user is not logged in, redirect to login page
+
+    if not invitations.check_invitation_valid(invitation):
+        return HTMLResponse(
+            content="<html><body><h1>This invitation has expired or already been used</h1></body></html>"
+        )
+
     if not claims:
         login_url = f"/api/v1/auth/login?next=/api/v1/invitations/{invitation_hash}/accept"
         return RedirectResponse(url=login_url)
-    
-    # Show acceptance page
-    return HTMLResponse(content=f"""
+
+    return HTMLResponse(
+        content=f"""
     <html>
     <body>
         <h1>Invitation to join {invitation.group_value}</h1>
@@ -78,82 +76,84 @@ async def show_invitation_page(
         </form>
     </body>
     </html>
-    """)
+    """
+    )
 
 
 @router.post("/invitations/{invitation_hash}/confirm")
 async def confirm_invitation(
     invitation_hash: str,
     request: Request,
-    action: str = Form(...),  # "accept" or "reject"
+    action: str = Form(...),
     claims: Dict[str, Any] = Depends(optional_user_claims),
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
 ):
+    """Process invitation acceptance or rejection."""
     if not claims:
         return RedirectResponse(
-            url=f"/api/v1/invitations/{invitation_hash}",
-            status_code=302)
-    """Process invitation acceptance or rejection"""
+            url=f"/api/v1/invitations/{invitation_hash}", status_code=302
+        )
+
     if action == "accept":
-        result = await invitation_service.accept_invitation(db, invitation_hash, claims)
+        result = await invitations.accept_invitation(db, invitation_hash, claims)
         if result["status"] == "info":
             title = "Already a Member"
         else:
             title = "Invitation Accepted"
         return templates.TemplateResponse(
-            "result.html", 
+            "result.html",
             {
                 "request": request,
                 "title": title,
                 "message": result["message"],
-                "success": True
-            }
+                "success": True,
+            },
         )
     else:
         return templates.TemplateResponse(
-            "result.html", 
+            "result.html",
             {
                 "request": request,
                 "title": "Invitation Rejected",
                 "message": "You have declined this invitation.",
-                "success": False
-            }
+                "success": False,
+            },
         )
+
 
 @router.get("/invitations/{invitation_hash}", response_class=HTMLResponse)
 async def show_invitation_page(
     invitation_hash: str,
     request: Request,
     claims: Dict[str, Any] = Depends(optional_user_claims),
-    db: AsyncSession = Depends(get_async_db)
+    db: AsyncSession = Depends(get_async_db),
 ):
-    """Show invitation page with QR code and details"""
-    invitation = await crud_invitation.get_by_hash(db, invitation_hash)
+    """Show invitation page with QR code and details."""
+    invitation = await invitations.get_by_hash(db, invitation_hash)
     if not invitation:
-        return templates.TemplateResponse("error.html", {"request": request, "message": "Invalid invitation"})
-    
-    # Check if invitation is valid
-    is_valid = await crud_invitation.check_invitation_valid(invitation)
-    if not is_valid:
-        return templates.TemplateResponse("error.html", 
-                                         {"request": request, 
-                                          "message": "This invitation has expired or already been used"})
-    
-    # If user is not logged in, redirect to login page
+        return templates.TemplateResponse(
+            "error.html", {"request": request, "message": "Invalid invitation"}
+        )
+
+    if not invitations.check_invitation_valid(invitation):
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "message": "This invitation has expired or already been used",
+            },
+        )
+
     if not claims:
         login_url = f"/api/v1/auth/login?next=/api/v1/invitations/{invitation_hash}"
         return RedirectResponse(url=login_url)
-    
-    # Calculate expiration time in human-readable format
+
     expires_at = datetime.fromisoformat(invitation.expires_at)
-        
-    # Calculate remaining uses
     remaining_uses = invitation.max_uses - invitation.current_uses
-    
-    # Invitation URL for QR code
-    invitation_url = f"{request.url.scheme}://{request.url.netloc}/api/v1/invitations/{invitation_hash}"
-    
-    # Render the template with context
+    invitation_url = (
+        f"{request.url.scheme}://{request.url.netloc}/api/v1/invitations/{invitation_hash}"
+    )
+
     return templates.TemplateResponse(
         "invitation.html",
         {
@@ -161,7 +161,6 @@ async def show_invitation_page(
             "invitation": invitation,
             "invitation_url": invitation_url,
             "expiry_at": expires_at,
-            "remaining_uses": remaining_uses
-        }
+            "remaining_uses": remaining_uses,
+        },
     )
-

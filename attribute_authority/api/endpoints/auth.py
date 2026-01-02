@@ -14,7 +14,7 @@ from flaat import access_tokens
 from ...core.config import settings
 from ...db.session import get_async_db
 from ...core.logging_config import logger
-from ...crud.user import crud_user
+from ...services import user as users
 from ...schemas.user import UserCreate
 from ...web.templating import templates
 
@@ -122,9 +122,7 @@ async def oidc_callback(
             return HTMLResponse(content="<html><body><h1>Authentication Error</h1><p>Missing required user information</p></body></html>")
         
         # Create or update user
-        user = await crud_user.get_by_sub_and_iss(db, sub=sub, iss=iss)
-        if not user:
-            user = await crud_user.create(db, UserCreate(sub=sub, iss=iss))
+        user = await users.get_or_create(db, sub=sub, iss=iss)
         
         # Get the redirect URL from session
         redirect_url = request.session.get('next_url', '/')

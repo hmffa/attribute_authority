@@ -1,46 +1,39 @@
-from typing import List, Dict, Any
+"""User endpoints."""
+from math import ceil
+from typing import Any, Dict, List
+
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from math import ceil
 
-from ..dependencies import optional_user_claims, get_current_actor
+from ..dependencies import get_current_actor, optional_user_claims
 from ...db.session import get_async_db
-from ...crud.user import crud_user
 from ...models.user import User
 from ...schemas.user import UserOut, UserWithAttributes
-from ...services.user import user_service
-from ...core.logging_config import logger
+from ...services import user as users
 from ...web.templating import templates
 
 router = APIRouter()
-
 
 
 @router.get("/admin/users", response_model=List[UserOut])
 async def list_users(
     request: Request,
     page: int = Query(1, ge=1),
-    claims: Dict[str, Any] = Depends(optional_user_claims), # TODO change in a way that users can access here based on privileges (Can all users list other users?)
+    claims: Dict[str, Any] = Depends(optional_user_claims),
     db: AsyncSession = Depends(get_async_db),
 ):
-    """
-    Attribute Authority List Users Endpoint (Admin UI).
-    """
-    # 1. Auth Check (Redirect to login if missing)
+    """Attribute Authority List Users Endpoint (Admin UI)."""
     if not claims:
         login_url = f"/api/v1/auth/login?next={request.url.path}"
         return RedirectResponse(url=login_url)
-    
-    # 2. Call Service (Efficient Pagination)
+
     per_page = 5
-    result = await user_service.list_users(db, page=page, per_page=per_page)
-    
-    # 3. Calculate Pagination Metadata for Template
+    result = await users.list_users_paginated(db, page=page, per_page=per_page)
+
     total_users = result["total"]
     page_count = max(1, ceil(total_users / per_page))
-    
-    # 4. Prepare Context
+
     display_claims = {
         "sub": claims.get("sub"),
         "iss": claims.get("iss"),
@@ -53,7 +46,7 @@ async def list_users(
         {
             "request": request,
             "claims": display_claims,
-            "users": result["items"], # The slice from DB
+            "users": result["items"],
             "pagination": {
                 "page": page,
                 "per_page": per_page,
@@ -65,12 +58,11 @@ async def list_users(
         },
     )
 
+
 @router.get("/users/allattributes", response_model=List[UserWithAttributes])
 async def get_all_users_attributes(
     db: AsyncSession = Depends(get_async_db),
-    actor: User = Depends(get_current_actor)
+    actor: User = Depends(get_current_actor),
 ):
-    """
-    Returns a list of ALL users and ONLY the attributes/values the caller has permission to read.
-    """
-    return await user_service.get_all_users_with_visible_attributes(db, actor)
+    """Returns all users with only attributes the caller has permission to read."""
+    return await users.get_all_users_with_visible_attributes(db, actor)

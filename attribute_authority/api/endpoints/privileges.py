@@ -27,3 +27,24 @@ async def grant_privilege(
         target_restriction=privilege_in.target_restriction,
         is_delegable=privilege_in.is_delegable,
     )
+
+@router.put("/privileges/{privilege_id}", response_model=PrivilegeRead)
+async def update_privilege(
+    privilege_id: int,
+    privilege_in: PrivilegeCreate,
+    db: AsyncSession = Depends(get_async_db),
+    _=Depends(require_privilege(PrivilegeAction.ASSIGN_PRIVILEGE)),
+):
+    """
+    Update an existing privilege. 
+    Fields not sent in the payload will remain unchanged.
+    """
+    return await privileges.update_privilege(
+        db,
+        privilege_id=privilege_id,
+        action=privilege_in.action,
+        attribute_id=privilege_in.attribute_id,
+        value_restriction=privilege_in.value_restriction,
+        target_restriction=privilege_in.target_restriction,
+        is_delegable=privilege_in.is_delegable,
+    )

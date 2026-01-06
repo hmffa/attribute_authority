@@ -9,6 +9,7 @@ from sqlalchemy import (
     Boolean,
     Enum as SAEnum,
     JSON,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 
@@ -66,5 +67,12 @@ class Privilege(Base):
     attribute = relationship("Attribute", lazy="joined")
 
     __table_args__ = (
+        UniqueConstraint(
+            "grantee_user_id", 
+            "action", 
+            "attribute_id", 
+            "value_restriction", 
+            name="uq_privilege_scope"
+        ), # target_restriction was left out as it is flexible with AND/OR logic and can be updated
         # TODO add indexing later based in usage
     )

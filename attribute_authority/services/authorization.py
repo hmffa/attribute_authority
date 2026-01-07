@@ -78,9 +78,13 @@ def _check_target_restriction(
 
         # AND Logic: Returns True only if ALL keys in block match
         for key, regex in rule_block.items():
-            user_values = user_attrs.get(key, [])
+            user_values = user_attrs.get(key, [""])
+            values_to_check = user_values if user_values else [""]
 
-            if not user_values or not any(re.search(regex, v) for v in user_values):
+            # if not user_values or not any(re.search(regex, v) for v in user_values):
+            
+            # NOTE: Strict deny is avoided; missing attributes are treated as empty strings
+            if not any(re.search(regex, v) for v in values_to_check):
                 block_match = False
                 break
 

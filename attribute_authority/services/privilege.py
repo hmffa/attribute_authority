@@ -89,6 +89,7 @@ async def update_privilege(
         if hasattr(db_obj, field):
             setattr(db_obj, field, value)
 
+    # TODO: consider updating an 'updated_at' timestamp here
     await db.commit()
     await db.refresh(db_obj)
     return db_obj
@@ -142,8 +143,7 @@ async def assign_privilege_by_id(
         raise HTTPException(
             status_code=409, 
             detail=(
-                f"Privilege already exists (ID: {existing.id}). "
-                "To add more targets, update the existing privilege."
+                f"Privilege already exists (ID: {existing.id})."
             )
         )
     privilege = Privilege(

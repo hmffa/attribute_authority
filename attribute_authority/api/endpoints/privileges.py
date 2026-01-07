@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..dependencies import require_privilege
 from ...db.session import get_async_db
 from ...models.privilege import PrivilegeAction
-from ...schemas.privilege import PrivilegeCreate, PrivilegeRead
+from ...schemas.privilege import PrivilegeCreate, PrivilegeRead, PrivilegeUpdate
 from ...services import privilege as privileges
 
 router = APIRouter()
@@ -31,7 +31,7 @@ async def grant_privilege(
 @router.put("/privileges/{privilege_id}", response_model=PrivilegeRead)
 async def update_privilege(
     privilege_id: int,
-    privilege_in: PrivilegeCreate,
+    privilege_in: PrivilegeUpdate,
     db: AsyncSession = Depends(get_async_db),
     _=Depends(require_privilege(PrivilegeAction.ASSIGN_PRIVILEGE)),
 ):
@@ -42,9 +42,5 @@ async def update_privilege(
     return await privileges.update_privilege(
         db,
         privilege_id=privilege_id,
-        action=privilege_in.action,
-        attribute_id=privilege_in.attribute_id,
-        value_restriction=privilege_in.value_restriction,
-        target_restriction=privilege_in.target_restriction,
-        is_delegable=privilege_in.is_delegable,
+        privilege_in=privilege_in
     )

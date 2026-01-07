@@ -61,6 +61,7 @@ class Privilege(Base):
     target_restriction = Column(JSON, nullable=True)  # application-specific JSON filters
     is_delegable = Column(Boolean, nullable=False, default=False)
     created_at = Column(String(50), nullable=False)  # ISO format datetime
+    # TODO: add updated_at column later for tracking changes
 
     # Relations
     grantee = relationship("User", back_populates="privileges", lazy="joined")

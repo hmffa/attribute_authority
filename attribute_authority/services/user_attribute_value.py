@@ -1,6 +1,7 @@
 """User attribute value service - combines data access and business logic."""
 from collections import defaultdict
 from datetime import datetime, timezone
+from sqlalchemy.exc import IntegrityError
 from typing import Any, Dict, List
 
 from fastapi import HTTPException
@@ -61,7 +62,17 @@ async def create_value(
         updated_at=now,
     )
     db.add(db_obj)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as e:
+        await db.rollback()
+        if "uq_user_attribute_value_triplet" in str(e.orig):
+            raise HTTPException(
+                status_code=409,
+                detail="This attribute value already exists for this user."
+            )
+        
+        raise e
     await db.refresh(db_obj)
     return db_obj
 

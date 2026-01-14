@@ -183,7 +183,7 @@ async def set_value(
     db: AsyncSession,
     target_user_id: int,
     attribute_name: str,
-    value: str,
+    value: list[str],
     actor: User,
 ) -> UserAttributeValue:
     """Set (replace/overwrite) the value(s) of a specific user's attribute."""
@@ -210,11 +210,15 @@ async def set_value(
     await delete_values_by_user_and_attribute(db, target_user_id, attribute.id)
     
 
-    # Create new value
-    return await create_value(
-        db, user_id=target_user_id, attribute_id=attribute.id, value=value
-    )
-
+    # Create new value(s)
+    values_to_create = value if isinstance(value, list) else [value]
+    created_values = []
+    for val in values_to_create:
+        created_value = await create_value(
+            db, user_id=target_user_id, attribute_id=attribute.id, value=val
+        )
+        created_values.append(created_value)
+    return created_values
 
 async def delete_value(
     db: AsyncSession, user_id: int, attribute_id: int

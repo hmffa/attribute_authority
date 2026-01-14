@@ -66,7 +66,7 @@ async def remove_user_attribute_value(
 async def set_user_attribute_value(
     user_id: int,
     attribute_name: str,
-    value: str = Body(..., embed=True),
+    value: list[str] = Body(..., embed=True),
     db: AsyncSession = Depends(get_async_db),
     actor: User = Depends(get_current_actor),
 ):

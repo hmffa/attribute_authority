@@ -1,6 +1,6 @@
 """Authorization service - handles privilege checking logic."""
 import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,9 +16,13 @@ async def has_privilege(
     action: PrivilegeAction,
     target_user: Optional[User] = None,
     attribute_id: Optional[int] = None,
-    value: Optional[str] = None,
+    value: Union[str, List[str], None] = None,
 ) -> bool:
-    """Check if actor has the specified privilege."""
+    """
+    Check if actor has the specified privilege.
+    If 'value' is a list (for SET operations), ALL items in the list 
+    must match the privilege's value_restriction.
+    """
     actor_privileges = await privileges.get_by_grantee_and_action(
         db, user_id=actor.id, action=action
     )
@@ -34,7 +38,8 @@ async def has_privilege(
 
         # Check 2: Value Restriction (Regex)
         if priv.value_restriction and value:
-            if not re.search(priv.value_restriction, value):
+            values_to_check = value if isinstance(value, list) else [value]
+            if not all(re.search(priv.value_restriction, v) for v in values_to_check):
                 continue
 
         # Check 3: Target Restriction

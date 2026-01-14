@@ -60,3 +60,34 @@ async def remove_user_attribute_value(
     # TODO: Add authorization check for REMOVE_VALUE
     await user_attributes.remove_value(db, value_id=value_id)
     return {"status": "success", "message": "Value removed"}
+
+
+@router.put("/users/{user_id}/attributes/{attribute_name}", response_model=UserAttributeValueRead)
+async def set_user_attribute_value(
+    user_id: int,
+    attribute_name: str,
+    value: str = Body(..., embed=True),
+    db: AsyncSession = Depends(get_async_db),
+    actor: User = Depends(get_current_actor),
+):
+    """Set (replace/overwrite) the value(s) of a specific user's attribute."""
+    return await user_attributes.set_value(
+        db,
+        target_user_id=user_id,
+        attribute_name=attribute_name,
+        value=value,
+        actor=actor,
+    )
+
+
+@router.delete("/users/{user_id}/attributes/{attribute_name}")
+async def delete_user_attribute_values(
+    user_id: int,
+    attribute_name: str,
+    db: AsyncSession = Depends(get_async_db),
+    actor: User = Depends(get_current_actor),
+):
+    """Delete all values of a specific user's attribute."""
+    return await user_attributes.delete_value(
+        db, user_id=user_id, attribute_id=attribute_name
+    )

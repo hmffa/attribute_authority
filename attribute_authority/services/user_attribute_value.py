@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select, delete
 
 from ..models.user_attribute_value import UserAttributeValue
 from ..models.user import User
@@ -86,6 +86,17 @@ async def delete_value(db: AsyncSession, value_id: int) -> None:
     if db_obj:
         await db.delete(db_obj)
         await db.commit()
+
+async def delete_values_by_user_and_attribute(
+    db: AsyncSession, user_id: int, attribute_id: int
+) -> None:
+    """Delete all attribute values for a specific user and attribute."""
+    bulk_delete_stmt = delete(UserAttributeValue).where(
+        UserAttributeValue.user_id == user_id,
+        UserAttributeValue.attribute_id == attribute_id,
+    )
+    await db.execute(bulk_delete_stmt)
+    await db.commit()
 
 
 # --- Business Logic ---
@@ -167,3 +178,46 @@ async def add_value(
 async def remove_value(db: AsyncSession, value_id: int) -> None:
     """Remove a specific attribute value by ID."""
     await delete_value(db, value_id)
+
+async def set_value(
+    db: AsyncSession,
+    target_user_id: int,
+    attribute_name: str,
+    value: str,
+    actor: User,
+) -> UserAttributeValue:
+    """Set (replace/overwrite) the value(s) of a specific user's attribute."""
+    target_user = await users.get_by_id(db, target_user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Target user not found")
+
+    attribute = await attributes.get_or_404(db, attribute_name)
+
+    is_allowed = await authorization.has_privilege(
+        db,
+        actor=actor,
+        action=PrivilegeAction.SET_VALUE,
+        target_user=target_user,
+        attribute_id=attribute.id,
+        value=value,
+    )
+    if not is_allowed:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to set this attribute value."
+        )
+
+    # Delete existing values for the attribute
+    await delete_values_by_user_and_attribute(db, target_user_id, attribute.id)
+    
+
+    # Create new value
+    return await create_value(
+        db, user_id=target_user_id, attribute_id=attribute.id, value=value
+    )
+
+
+async def delete_value(
+    db: AsyncSession, user_id: int, attribute_id: int
+) -> None:
+    """Delete all attribute values for a specific user and attribute."""
+    return await delete_values_by_user_and_attribute(db, user_id, attribute_id)

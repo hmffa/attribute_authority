@@ -88,12 +88,12 @@ async def delete_value(db: AsyncSession, value_id: int) -> None:
         await db.commit()
 
 async def delete_values_by_user_and_attribute(
-    db: AsyncSession, user_id: int, attribute_name: str
+    db: AsyncSession, user_id: int, attribute_id: int
 ) -> None:
     """Delete all attribute values for a specific user and attribute."""
     bulk_delete_stmt = delete(UserAttributeValue).where(
         UserAttributeValue.user_id == user_id,
-        UserAttributeValue.attribute_definition.has(name=attribute_name),
+        UserAttributeValue.attribute_id == attribute_id,
     )
     await db.execute(bulk_delete_stmt)
     await db.commit()
@@ -250,4 +250,4 @@ async def delete_values(
             status_code=403, detail="Not authorized to delete this attribute's values."
         )
 
-    return await delete_values_by_user_and_attribute(db, target_user_id, attribute.id)
+    await delete_values_by_user_and_attribute(db, target_user_id, attribute.id)

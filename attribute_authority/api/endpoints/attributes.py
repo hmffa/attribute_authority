@@ -88,9 +88,10 @@ async def delete_user_attribute_values(
     actor: User = Depends(get_current_actor),
 ):
     """Delete all values of a specific user's attribute."""
-    return await user_attributes.delete_values(
+    await user_attributes.delete_values(
         db,
         target_user_id=user_id,
         attribute_name=attribute_name,
         actor=actor
     )
+    return {"status": "success", "message": "Values deleted"}

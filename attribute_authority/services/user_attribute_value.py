@@ -88,12 +88,12 @@ async def delete_value(db: AsyncSession, value_id: int) -> None:
         await db.commit()
 
 async def delete_values_by_user_and_attribute(
-    db: AsyncSession, user_id: int, attribute_id: int
+    db: AsyncSession, user_id: int, attribute_name: str
 ) -> None:
     """Delete all attribute values for a specific user and attribute."""
     bulk_delete_stmt = delete(UserAttributeValue).where(
         UserAttributeValue.user_id == user_id,
-        UserAttributeValue.attribute_id == attribute_id,
+        UserAttributeValue.attribute_definition.has(name=attribute_name),
     )
     await db.execute(bulk_delete_stmt)
     await db.commit()
@@ -185,7 +185,7 @@ async def set_value(
     attribute_name: str,
     value: list[str],
     actor: User,
-) -> UserAttributeValue:
+) -> List[UserAttributeValue]:
     """Set (replace/overwrite) the value(s) of a specific user's attribute."""
     target_user = await users.get_by_id(db, target_user_id)
     if not target_user:
@@ -220,8 +220,34 @@ async def set_value(
         created_values.append(created_value)
     return created_values
 
-async def delete_value(
-    db: AsyncSession, user_id: int, attribute_id: int
+async def delete_values(
+    db: AsyncSession,
+    target_user_id: int,
+    attribute_name: str,
+    actor: User,
 ) -> None:
     """Delete all attribute values for a specific user and attribute."""
-    return await delete_values_by_user_and_attribute(db, user_id, attribute_id)
+
+    target_user = await users.get_by_id(db, target_user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Target user not found")
+
+    attribute = await attributes.get_or_404(db, attribute_name)
+
+    existing_values = await get_by_user_and_attr_id(db, target_user_id, attribute.id)
+    all_values = [v.value for v in existing_values]
+
+    is_allowed = await authorization.has_privilege(
+        db,
+        actor=actor,
+        action=PrivilegeAction.DELETE_VALUE,
+        target_user=target_user,
+        attribute_id=attribute.id,
+        value=all_values,
+    )
+    if not is_allowed:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to delete this attribute's values."
+        )
+
+    return await delete_values_by_user_and_attribute(db, target_user_id, attribute.id)

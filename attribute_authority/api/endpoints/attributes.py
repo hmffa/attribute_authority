@@ -1,5 +1,5 @@
 """User attribute endpoints."""
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from fastapi import APIRouter, Body, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -62,7 +62,7 @@ async def remove_user_attribute_value(
     return {"status": "success", "message": "Value removed"}
 
 
-@router.put("/users/{user_id}/attributes/{attribute_name}", response_model=UserAttributeValueRead)
+@router.put("/users/{user_id}/attributes/{attribute_name}", response_model=List[UserAttributeValueRead])
 async def set_user_attribute_value(
     user_id: int,
     attribute_name: str,
@@ -88,6 +88,9 @@ async def delete_user_attribute_values(
     actor: User = Depends(get_current_actor),
 ):
     """Delete all values of a specific user's attribute."""
-    return await user_attributes.delete_value(
-        db, user_id=user_id, attribute_id=attribute_name
+    return await user_attributes.delete_values(
+        db,
+        target_user_id=user_id,
+        attribute_name=attribute_name,
+        actor=actor
     )

@@ -20,7 +20,7 @@ async def has_privilege(
 ) -> bool:
     """
     Check if actor has the specified privilege.
-    If 'value' is a list (for SET operations), ALL items in the list 
+    If 'value' is a list (for SET and DELETE operations), ALL items in the list 
     must match the privilege's value_restriction.
     """
     actor_privileges = await privileges.get_by_grantee_and_action(

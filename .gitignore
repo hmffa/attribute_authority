@@ -115,3 +115,6 @@ coverage.svg
 
 # Sphinx documentation build directory
 doc/build
+attribute_authority/api/endpoints/privileges.py
+.github/copilot-instructions.md
+GEMINI.md

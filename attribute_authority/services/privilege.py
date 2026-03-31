@@ -1,4 +1,5 @@
 """Privilege service - combines data access and business logic."""
+import re
 from datetime import datetime, timezone
 from typing import List, Optional, Any
 
@@ -7,7 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from ..models.privilege import Privilege, PrivilegeAction
-from ..schemas.privilege import PrivilegeUpdate
+from ..models.user import User
+from ..schemas.privilege import PrivilegeDelegate, PrivilegeUpdate
 from . import user as users
 
 
@@ -155,4 +157,231 @@ async def assign_privilege_by_id(
         is_delegable=is_delegable,
     )
 
+    return await create_privilege(db, privilege)
+
+
+# --- Delegation Logic ---
+
+async def get_delegable_privileges(
+    db: AsyncSession, 
+    user_id: int, 
+    action: PrivilegeAction
+) -> List[Privilege]:
+    """Get all delegable privileges for a user and action."""
+    result = await db.execute(
+        select(Privilege).where(
+            Privilege.grantee_user_id == user_id,
+            Privilege.action == action,
+            Privilege.is_delegable == True,
+        )
+    )
+    return result.scalars().all()
+
+
+def _is_value_restriction_subset(
+    source_restriction: Optional[str],
+    delegated_restriction: Optional[str]
+) -> bool:
+    """
+    Check if the delegated value restriction is equal to or more restrictive 
+    than the source.
+    
+    Rules:
+    - If source is None (no restriction), any delegated restriction is valid
+    - If source has a restriction, delegated must match exactly or be more restrictive
+    - If delegated is None but source has a restriction, it's NOT valid (would be broader)
+    """
+    if source_restriction is None:
+        # Source has no restriction, so any delegated restriction is valid
+        return True
+    
+    if delegated_restriction is None:
+        # Delegated has no restriction but source does - this is broader, not allowed
+        return False
+    
+    # Both have restrictions - for safety, require exact match or the delegated 
+    # pattern must be a "subset" of source. A simple approach: delegated must 
+    # match the source pattern (i.e., delegated is at least as restrictive)
+    # For exact subset validation, we'd need regex analysis which is complex.
+    # Simple approach: if source pattern matches delegated pattern, it's valid.
+    # More practical: require delegated to start with or equal source pattern.
+    
+    # Conservative approach: delegated must be equal to or start with source
+    # (as a prefix, meaning it's at least as restrictive)
+    if delegated_restriction == source_restriction:
+        return True
+    
+    # Check if delegated pattern is more specific (contains source pattern)
+    if source_restriction in delegated_restriction:
+        return True
+        
+    return False
+
+
+def _is_target_restriction_subset(
+    source_restriction: Optional[list],
+    delegated_restriction: Optional[list]
+) -> bool:
+    """
+    Check if delegated target restriction is equal to or more restrictive.
+    
+    Rules:
+    - If source is None, any delegated restriction is valid
+    - If delegated is None but source exists, it's broader (not allowed)
+    - If both exist, delegated must contain all rules from source (AND logic)
+    """
+    if source_restriction is None:
+        return True
+    
+    if delegated_restriction is None:
+        return False
+    
+    # Delegated must include all source restrictions (can add more)
+    # Each rule block in source must appear in delegated
+    for source_rule in source_restriction:
+        found = False
+        for delegated_rule in delegated_restriction:
+            # Check if delegated_rule contains all key-value pairs from source_rule
+            if all(
+                key in delegated_rule and delegated_rule[key] == value
+                for key, value in source_rule.items()
+            ):
+                found = True
+                break
+        if not found:
+            return False
+    
+    return True
+
+
+def _can_delegate_privilege(
+    source_privilege: Privilege,
+    delegated: PrivilegeDelegate,
+) -> tuple[bool, str]:
+    """
+    Validate if a privilege can be delegated based on the source privilege.
+    
+    Returns (is_valid, error_message).
+    """
+    # Check 1: Source must be delegable
+    if not source_privilege.is_delegable:
+        return False, "Source privilege is not delegable"
+    
+    # Check 2: Actions must match
+    if source_privilege.action != delegated.action:
+        return False, f"Cannot delegate action '{delegated.action.value}' from privilege with action '{source_privilege.action.value}'"
+    
+    # Check 3: Attribute scope - delegated must be same or more specific
+    if source_privilege.attribute_id is not None:
+        if delegated.attribute_id is None:
+            return False, "Delegated privilege cannot have broader attribute scope than source"
+        if delegated.attribute_id != source_privilege.attribute_id:
+            return False, f"Attribute ID must match source privilege (expected {source_privilege.attribute_id})"
+    
+    # Check 4: Value restriction - delegated must be same or more restrictive
+    if not _is_value_restriction_subset(
+        source_privilege.value_restriction, 
+        delegated.value_restriction
+    ):
+        return False, "Delegated value restriction must be equal to or more restrictive than source"
+    
+    # Check 5: Target restriction - delegated must be same or more restrictive
+    if not _is_target_restriction_subset(
+        source_privilege.target_restriction,
+        delegated.target_restriction
+    ):
+        return False, "Delegated target restriction must be equal to or more restrictive than source"
+    
+    # Check 6: is_delegable - can only delegate as delegable if source is delegable
+    # (already checked in Check 1, but we allow setting is_delegable=False on delegated)
+    
+    return True, ""
+
+
+async def find_covering_privilege(
+    db: AsyncSession,
+    delegator: User,
+    delegated: PrivilegeDelegate,
+) -> Optional[Privilege]:
+    """
+    Find a delegable privilege that covers the requested delegation.
+    Returns the covering privilege if found, None otherwise.
+    """
+    delegable_privileges = await get_delegable_privileges(
+        db, delegator.id, delegated.action
+    )
+    
+    for priv in delegable_privileges:
+        is_valid, _ = _can_delegate_privilege(priv, delegated)
+        if is_valid:
+            return priv
+    
+    return None
+
+
+async def delegate_privilege(
+    db: AsyncSession,
+    delegator: User,
+    delegation_request: PrivilegeDelegate,
+) -> Privilege:
+    """
+    Delegate a privilege from delegator to grantee.
+    
+    Validates that:
+    1. Delegator has a delegable privilege that covers the request
+    2. The delegated privilege is equal to or a subset of the source
+    """
+    # Find a covering privilege
+    covering_privilege = await find_covering_privilege(
+        db, delegator, delegation_request
+    )
+    
+    if not covering_privilege:
+        # Get more specific error message
+        delegable_privileges = await get_delegable_privileges(
+            db, delegator.id, delegation_request.action
+        )
+        
+        if not delegable_privileges:
+            raise HTTPException(
+                status_code=403,
+                detail=f"You do not have any delegable privileges for action '{delegation_request.action.value}'"
+            )
+        
+        # Check each one for specific error
+        errors = []
+        for priv in delegable_privileges:
+            is_valid, error = _can_delegate_privilege(priv, delegation_request)
+            if not is_valid:
+                errors.append(f"Privilege {priv.id}: {error}")
+        
+        raise HTTPException(
+            status_code=403,
+            detail=f"Cannot delegate this privilege. The requested privilege exceeds your delegable privileges. Details: {'; '.join(errors)}"
+        )
+    
+    # Check for duplicate
+    existing = await find_duplicate_privilege(
+        db,
+        delegation_request.grantee_user_id,
+        delegation_request.action,
+        delegation_request.attribute_id,
+        delegation_request.value_restriction,
+    )
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Privilege already exists (ID: {existing.id})."
+        )
+    
+    # Create the delegated privilege
+    privilege = Privilege(
+        grantee_user_id=delegation_request.grantee_user_id,
+        action=delegation_request.action,
+        attribute_id=delegation_request.attribute_id,
+        value_restriction=delegation_request.value_restriction,
+        target_restriction=delegation_request.target_restriction,
+        is_delegable=delegation_request.is_delegable,
+    )
+    
     return await create_privilege(db, privilege)

@@ -26,6 +26,12 @@ class PrivilegeBase(BaseModel):
 class PrivilegeCreate(PrivilegeBase):
     pass
 
+
+class PrivilegeDelegate(PrivilegeBase):
+    """Schema for delegating a privilege to another user."""
+    pass
+
+
 class PrivilegeUpdate(BaseModel):
     action: Optional[PrivilegeAction] = None
     attribute_id: Optional[int] = None

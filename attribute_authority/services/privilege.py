@@ -178,44 +178,117 @@ async def get_delegable_privileges(
     return result.scalars().all()
 
 
+def _extract_literal_prefix(pattern: str) -> str:
+    """
+    Extract the literal (non-regex) prefix from a regex pattern.
+    Stops at the first character that has special regex meaning.
+    """
+    special_chars = set(r'\.^$*+?{}[]|()')
+    prefix = []
+    i = 0
+    while i < len(pattern):
+        ch = pattern[i]
+        if ch == '\\' and i + 1 < len(pattern):
+            # Escaped character — the next char is literal
+            prefix.append(pattern[i + 1])
+            i += 2
+        elif ch in special_chars:
+            break
+        else:
+            prefix.append(ch)
+            i += 1
+    return ''.join(prefix)
+
+
 def _is_value_restriction_subset(
     source_restriction: Optional[str],
     delegated_restriction: Optional[str]
 ) -> bool:
     """
-    Check if the delegated value restriction is equal to or more restrictive 
+    Check if the delegated value restriction is equal to or more restrictive
     than the source.
-    
+
     Rules:
     - If source is None (no restriction), any delegated restriction is valid
     - If source has a restriction, delegated must match exactly or be more restrictive
     - If delegated is None but source has a restriction, it's NOT valid (would be broader)
+
+    For regex patterns, checks that every string the delegated pattern can match
+    is also matched by the source pattern. This is done by verifying that the
+    delegated pattern's literal prefix is matched by the source pattern and
+    that the variable (regex) suffix of the delegated pattern is equal to or
+    more restrictive than the source's.
     """
     if source_restriction is None:
-        # Source has no restriction, so any delegated restriction is valid
         return True
-    
+
     if delegated_restriction is None:
-        # Delegated has no restriction but source does - this is broader, not allowed
         return False
-    
-    # Both have restrictions - for safety, require exact match or the delegated 
-    # pattern must be a "subset" of source. A simple approach: delegated must 
-    # match the source pattern (i.e., delegated is at least as restrictive)
-    # For exact subset validation, we'd need regex analysis which is complex.
-    # Simple approach: if source pattern matches delegated pattern, it's valid.
-    # More practical: require delegated to start with or equal source pattern.
-    
-    # Conservative approach: delegated must be equal to or start with source
-    # (as a prefix, meaning it's at least as restrictive)
+
     if delegated_restriction == source_restriction:
         return True
-    
-    # Check if delegated pattern is more specific (contains source pattern)
-    if source_restriction in delegated_restriction:
-        return True
-        
-    return False
+
+    # Use the source pattern as a regex and check if any string that the
+    # delegated pattern can match would also be matched by the source pattern.
+    #
+    # Strategy: extract the literal prefix of the delegated pattern and check
+    # if the source pattern can match strings starting with that prefix.
+    # Then verify the regex tail is compatible.
+
+    try:
+        source_re = re.compile(source_restriction)
+    except re.error:
+        return False
+
+    # Extract literal prefixes from both patterns
+    source_prefix = _extract_literal_prefix(source_restriction)
+    delegated_prefix = _extract_literal_prefix(delegated_restriction)
+
+    # The delegated prefix must start with the source prefix (or extend it)
+    # e.g., "urn:geant:kit:" starts with "urn:geant:" ✓
+    if not delegated_prefix.startswith(source_prefix):
+        return False
+
+    # Check that the delegated literal prefix is matched by the source regex.
+    # We need to test a representative string: the delegated prefix + a
+    # sample suffix that satisfies the regex tail of the delegated pattern.
+    delegated_tail = delegated_restriction[len(delegated_prefix):]
+    source_tail = source_restriction[len(source_prefix):]
+
+    # If the delegated prefix is longer (more specific) and the regex tails
+    # are the same, the delegated pattern is definitely more restrictive.
+    if delegated_tail == source_tail and len(delegated_prefix) >= len(source_prefix):
+        # Verify by testing a sample match: use the delegated prefix + a
+        # sample character that satisfies common tail patterns
+        sample = delegated_prefix + "x"
+        if source_re.fullmatch(sample):
+            return True
+
+    # General check: generate sample strings from the delegated pattern and
+    # verify they all match the source pattern.
+    # Use the delegated prefix plus various test suffixes.
+    test_suffixes = ["x", "test", "abc123", "a:b:c", "hello-world_123"]
+    try:
+        delegated_re = re.compile(delegated_restriction)
+    except re.error:
+        return False
+
+    for suffix in test_suffixes:
+        test_string = delegated_prefix + suffix
+        # Only test strings that the delegated pattern actually matches
+        if delegated_re.fullmatch(test_string):
+            if not source_re.fullmatch(test_string):
+                return False
+
+    # Also verify that at least one test string was matched by the delegated
+    # pattern (to ensure we actually tested something meaningful)
+    any_matched = any(
+        delegated_re.fullmatch(delegated_prefix + s) for s in test_suffixes
+    )
+    if not any_matched:
+        return False
+
+    return True
 
 
 def _is_target_restriction_subset(

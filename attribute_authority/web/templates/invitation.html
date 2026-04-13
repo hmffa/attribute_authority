@@ -1,46 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Group Invitation</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-    <script src="/static/js/invitation.js"></script>
-</head>
-<body>
-    <div id="invitation-url" data-url="{{ invitation_url }}"></div>
-    <div class="invitation-card">
-        <div class="invitation-header">
-            <h1>Invitation to Join Group</h1>
-            <p>You have been invited by Admin to join the group:</p>
-        </div>
-        
-        <div class="invitation-body">
-            <div class="invitation-details">
-                <p><strong>Group:</strong> {{ invitation.group_value }}</p>
-                <div id="expiry" data-expiry="{{ expiry_at }}"></div>
-                <p><strong>Expires:</strong> <span id="expiry-at"></span></p>
-                <p><strong>Remaining spots:</strong> {{ remaining_uses }} of {{ invitation.max_uses }}</p>
+{% extends "base.html" %}
+
+{% block title %}Group Invitation - Attribute Authority Demo{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm text-center">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 text-primary">Invitation to Join Group</h4>
             </div>
             
-            <div class="qr-container">
-                <div id="qrcode"></div>
-            </div>
-            
-            <p>Please review the invitation and choose to approve or reject your membership:</p>
-            
-            <form action="/api/v1/invitations/{{ invitation.hash }}/confirm" method="post">
-                <div class="button-container">
-                    <button type="submit" name="action" value="accept" class="btn btn-approve">Approve</button>
-                    <button type="submit" name="action" value="reject" class="btn btn-reject">Reject</button>
+            <div class="card-body p-4 p-md-5">
+                <p class="lead mb-2">You have been invited to join:</p>
+                <h2 class="mb-4">{{ invitation.group_value }}</h2>
+                
+                <div class="row text-start mb-4 justify-content-center">
+                    <div class="col-12 col-md-10">
+                        <ul class="list-group list-group-flush rounded border">
+                            <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                                <strong>Expires:</strong> 
+                                <span class="text-muted">{{ expiry_at }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                                <strong>Remaining Spots:</strong> 
+                                <span class="badge bg-secondary rounded-pill">{{ remaining_uses }} of {{ invitation.max_uses }}</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-            </form>
-        </div>
-        
-        <div class="meta-info">
-            <span>If you did not expect this invitation, you can safely ignore this message.</span>
+
+                <div class="mb-4">
+                    <p class="text-muted mb-2 fw-bold">Scan to open via mobile:</p>
+                    <div id="qrcode" class="d-inline-block border p-3 bg-white shadow-sm rounded"></div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="mt-4">
+                    <p class="text-muted mb-3">Please review the invitation and choose to approve or reject your membership:</p>
+                    
+                    <a href="{{ invitation_url }}" class="btn btn-outline-primary w-100 mb-3 btn-lg">Accept Invitation Link</a>
+                    
+                    <form action="/api/v1/invitations/{{ invitation.hash }}/confirm" method="post" class="d-flex gap-2 justify-content-center">
+                        <button type="submit" name="action" value="accept" class="btn btn-success flex-grow-1">Approve</button>
+                        <button type="submit" name="action" value="reject" class="btn btn-danger flex-grow-1">Reject</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card-footer bg-light text-muted small py-3">
+                If you did not expect this invitation, you can safely ignore this message.
+            </div>
         </div>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- qrcode-generator CDN -->
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var invitationUrl = "{{ invitation_url }}";
+        
+        if (invitationUrl) {
+            try {
+                // Generate QR Code dynamically using qrcode-generator
+                var typeNumber = 0; // Auto-detect size
+                var errorCorrectionLevel = 'M';
+                var qr = qrcode(typeNumber, errorCorrectionLevel);
+                qr.addData(invitationUrl);
+                qr.make();
+                
+                // Render QR Code inside the placeholder container
+                var qrContainer = document.getElementById('qrcode');
+                // The library creates an img tag directly
+                qrContainer.innerHTML = qr.createImgTag(5, 10);
+                
+                // Add Bootstrap fluid class to the generated img tag
+                var img = qrContainer.querySelector('img');
+                if (img) {
+                    img.classList.add('img-fluid');
+                }
+            } catch (e) {
+                console.error("Could not generate QR code", e);
+                document.getElementById('qrcode').innerHTML = '<span class="text-danger">QR Code not available</span>';
+            }
+        }
+    });
+</script>
+{% endblock %}

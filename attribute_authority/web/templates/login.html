@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Log In - Attribute Authority Demo{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow-sm text-center">
+            <div class="card-body p-5">
+                <h2 class="card-title mb-4">Welcome</h2>
+                <p class="card-text text-muted mb-4">Please log in to manage your attributes and invitations.</p>
+                <a href="/api/v1/auth/login" class="btn btn-primary btn-lg w-100">Log In via OIDC</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

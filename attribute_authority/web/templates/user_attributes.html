@@ -1,148 +1,69 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>My Attributes</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="/static/css/user_attributes.css" rel="stylesheet" />
-</head>
-<body>
-  <div class="container">
-    <header class="header">
-      <div class="userbar">
-        <div class="avatar" aria-hidden="true">
-          {% set initials = (claims.name or claims.email or 'U') | string %}
-          {{ initials.split(' ')[0][0] if ' ' in initials else initials[0] }}
-        </div>
-        <div class="user-info">
-          <h1>User Information</h1>
-          <div class="user-meta">
-            {% if claims.name %}<div class="meta"><strong>Name:</strong> {{ claims.name }}</div>{% endif %}
-            {% if claims.email %}<div class="meta"><strong>Email:</strong> {{ claims.email }}</div>{% endif %}
-            {% if claims.sub %}<div class="meta"><strong>Sub:</strong> <span class="mono">{{ claims.sub }}</span></div>{% endif %}
-            {% if claims.iss %}<div class="meta"><strong>Issuer:</strong> <span class="mono">{{ claims.iss }}</span></div>{% endif %}
-          </div>
-        </div>
-        <div class="actions">
-          <a class="btn" href="/api/v1/auth/logout">Log out</a>
-        </div>
-      </div>
-    </header>
+{% extends "base.html" %}
 
-    <main>
-      <section class="attributes">
-        <div class="attributes-header">
-          <h2>Attributes</h2>
-          <div class="tools">
-            <div class="search">
-              <input type="search" id="attr-search" placeholder="Filter attributes..." aria-label="Filter attributes" />
-            </div>
-            <div class="tool-buttons">
-              <button class="btn btn-ghost" id="collapse-all">Collapse all</button>
-              <button class="btn btn-ghost" id="expand-all">Expand all</button>
-            </div>
-          </div>
-        </div>
+{% block title %}My Attributes - Attribute Authority Demo{% endblock %}
 
-        {% set attrs_json = attributes | tojson %}
-        <script id="attrs-json" type="application/json">{{ attrs_json|safe }}</script>
-        <div id="claims-data"
-             data-sub="{{ claims.sub or '' }}"
-             data-iss="{{ claims.iss or '' }}"></div>
-
-        <ul class="attr-list" id="attr-list">
-          {% for key, value in attributes.items() %}
-            <li class="attr-item" data-key="{{ key }}">
-              <div class="attr-row">
-                <div class="attr-head">
-                  <div class="attr-key mono">{{ key }}</div>
-                  <div class="attr-actions">
-                    <button class="icon-btn attr-remove" title="Remove attribute" aria-label="Remove attribute" data-action="remove-key">
-                      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M6 7h12l-1 13H7L6 7zm3-3h6l1 2H8l1-2z"/></svg>
-                    </button>
-                    <button class="icon-btn attr-toggle" title="Toggle details" aria-label="Toggle details" data-action="toggle">
-                      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M7 10l5 5 5-5z"/></svg>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="attr-body">
-                  {% if value is sequence and value is not string %}
-                    <div class="chips" data-type="sequence">
-                      {% for item in value %}
-                        {% if item is mapping %}
-                          {% set item_id = item.get('id') %}
-                          {% set item_val = item.get('value') %}
-                        {% else %}
-                          {% set item_id = None %}
-                          {% set item_val = item %}
-                        {% endif %}
-                        <span class="chip" data-value="{{ item_val }}" {% if item_id is not none %}data-id="{{ item_id }}"{% endif %}>
-                          <span class="chip-text mono">{{ item_val }}</span>
-                          <button class="chip-remove" title="Remove value" aria-label="Remove value"
-                                  data-action="remove-value"
-                                  data-value="{{ item_val }}"
-                                  {% if item_id is not none %}data-id="{{ item_id }}"{% endif %}>
-                            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M6 7h12l-1 13H7L6 7zm3-3h6l1 2H8l1-2z"/></svg>
-                          </button>
-                        </span>
-                      {% endfor %}
-                    </div>
-                    <details class="raw">
-                      <summary>Raw JSON</summary>
-                      <pre class="code">{{ attributes[key] | map(attribute='value') | list | tojson(indent=2) }}</pre>
-                    </details>
-                  {% elif value is mapping %}
-                    {% if value.get('value') is not none and value.get('id') is not none %}
-                      <div class="chips" data-type="single">
-                        <span class="chip" data-value="{{ value.get('value') }}" data-id="{{ value.get('id') }}">
-                          <span class="chip-text mono">{{ value.get('value') }}</span>
-                          <button class="chip-remove" title="Remove value" aria-label="Remove value"
-                                  data-action="remove-value"
-                                  data-value="{{ value.get('value') }}"
-                                  data-id="{{ value.get('id') }}">
-                            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M6 7h12l-1 13H7L6 7zm3-3h6l1 2H8l1-2z"/></svg>
-                          </button>
-                        </span>
-                      </div>
-                    {% endif %}
-                    <details class="raw open">
-                      <summary>Raw JSON</summary>
-                      <pre class="code">{{ attributes[key] | map(attribute='value') | list | tojson(indent=2) }}</pre>
-                    </details>
-                  {% else %}
-                    <div class="scalar mono">{{ value }}</div>
-                    <details class="raw">
-                      <summary>Raw JSON</summary>
-                      <pre class="code">{{ attributes[key] | map(attribute='value') | list | tojson(indent=2) }}</pre>
-                    </details>
-                  {% endif %}
-                </div>
-              </div>
-            </li>
-          {% endfor %}
-        </ul>
-
-        {% if not attributes %}
-          <div class="empty">No attributes found for your account.</div>
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        Welcome, 
+        {% if claims and claims.name %}
+            {{ claims.name }}
+        {% elif claims and claims.email %}
+            {{ claims.email }}
+        {% elif claims and claims.sub %}
+            {{ claims.sub }}
+        {% else %}
+            User
         {% endif %}
-      </section>
-    </main>
-  </div>
+    </h2>
+    <button class="btn btn-success" type="button">Generate Group Invite</button>
+</div>
 
-  <div class="modal" id="confirm-modal" aria-hidden="true">
-    <div class="modal-content">
-      <h3 id="confirm-title">Confirm removal</h3>
-      <p id="confirm-text">Are you sure you want to remove this item?</p>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="modal-cancel">Cancel</button>
-        <button class="btn danger" id="modal-confirm">Remove</button>
-      </div>
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0">Your Attributes & Entitlements</h5>
     </div>
-  </div>
-
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-  <script src="/static/js/user_attributes.js"></script>
-</body>
-</html>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="px-4 py-3 border-0">Attribute Name</th>
+                        <th class="px-4 py-3 border-0">Values</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if attributes %}
+                        {% for key, value in attributes.items() %}
+                        <tr>
+                            <td class="px-4 py-3 fw-bold align-middle">{{ key }}</td>
+                            <td class="px-4 py-3 align-middle">
+                                {% if value is sequence and value is not string %}
+                                    {% for item in value %}
+                                        {% if item is mapping %}
+                                            <span class="badge bg-primary fs-6 me-1 mb-1">{{ item.get('value', item) }}</span>
+                                        {% else %}
+                                            <span class="badge bg-primary fs-6 me-1 mb-1">{{ item }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% elif value is mapping %}
+                                    <span class="badge bg-primary fs-6 mb-1">{{ value.get('value', value) }}</span>
+                                {% else %}
+                                    <span class="badge bg-primary fs-6 mb-1">{{ value }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="2" class="text-center py-5 text-muted">
+                                <i>No attributes found for your account.</i>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

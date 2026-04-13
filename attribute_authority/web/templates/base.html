@@ -3,36 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Attribute Authority Demo{% endblock %}</title>
-    <!-- Bootstrap 5 CSS CDN -->
+    <meta name="color-scheme" content="light dark">
+    <title>{% block title %}Attribute Authority{% endblock %}</title>
+    <script>
+        (function() {
+            const media = window.matchMedia('(prefers-color-scheme: dark)');
+            const applyTheme = function() {
+                document.documentElement.setAttribute('data-bs-theme', media.matches ? 'dark' : 'light');
+            };
+            applyTheme();
+            if (typeof media.addEventListener === 'function') {
+                media.addEventListener('change', applyTheme);
+            } else if (typeof media.addListener === 'function') {
+                media.addListener(applyTheme);
+            }
+        })();
+    </script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="/static/css/app.css" rel="stylesheet">
+    {% block head %}{% endblock %}
 </head>
-<body class="bg-light">
-    <!-- Dark-themed responsive navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+<body class="d-flex flex-column">
+    <nav class="navbar navbar-expand-lg border-bottom sticky-top navbar-blur mb-4">
         <div class="container">
-            <a class="navbar-brand" href="#">Attribute Authority Demo</a>
+            <a class="navbar-brand d-flex align-items-center gap-3" href="/">
+                <span class="icon-circle d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary border border-primary-subtle">
+                    <i class="bi bi-shield-lock fs-4"></i>
+                </span>
+                <span>
+                    <span class="d-block fw-semibold">Attribute Authority</span>
+                    <span class="d-block small text-body-secondary">Bootstrap UI for identity attributes and authorization</span>
+                </span>
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     {% if claims %}
                     <li class="nav-item">
-                        <a class="nav-link" href="/api/v1/auth/logout">Log Out</a>
+                        <a class="nav-link {% if active_nav == 'dashboard' %}active{% endif %}" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_nav == 'attributes-self' %}active{% endif %}" href="/me/attributes">My Attributes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_nav == 'users' %}active{% endif %}" href="/admin/users">Users</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_nav == 'attribute-definitions' %}active{% endif %}" href="/admin/attributes">Definitions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_nav == 'privileges' %}active{% endif %}" href="/admin/privileges">Privileges</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_nav == 'invitations' %}active{% endif %}" href="/invitations/manage">Invitations</a>
                     </li>
                     {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if active_nav == 'privacy' %}active{% endif %}" href="/privacy">Privacy</a>
+                    </li>
                 </ul>
+                <div class="d-flex align-items-center gap-2 ms-lg-3">
+                    <a class="btn btn-outline-secondary btn-sm d-none d-lg-inline-flex align-items-center gap-2" href="/docs">
+                        <i class="bi bi-file-earmark-code"></i>
+                        API Docs
+                    </a>
+                    {% if claims %}
+                    <div class="text-end small">
+                        <div class="fw-semibold">{{ claims.name or claims.email or 'Signed in' }}</div>
+                        <div class="text-body-secondary">{{ claims.email or claims.sub }}</div>
+                    </div>
+                    <a class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2" href="/logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Log Out
+                    </a>
+                    {% else %}
+                    <a class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2" href="/login">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        Log In
+                    </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </nav>
 
-    <!-- Center container for content -->
-    <div class="container pb-5">
+    <main class="container pb-5 flex-grow-1">
+        {% if page_message %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>{{ page_message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+        {% if page_error %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-octagon-fill me-2"></i>{{ page_error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
         {% block content %}{% endblock %}
-    </div>
+    </main>
 
-    <!-- Bootstrap 5 JS Bundle CDN (includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     {% block scripts %}{% endblock %}
 </body>

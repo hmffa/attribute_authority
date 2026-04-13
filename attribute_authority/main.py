@@ -1,23 +1,20 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.middleware.sessions import SessionMiddleware
+from contextlib import asynccontextmanager
 import time
 from typing import Callable
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-from contextlib import asynccontextmanager
-from alembic.config import Config
-from alembic import command
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from .api import api_router
 from .core.config import settings
 from .core.logging_config import logger
-from .api.dependencies import get_current_user_claims
-from .db.session import get_async_db
-from .scripts.startup import insert_user_from_config
-from fastapi.staticfiles import StaticFiles
-from pathlib import Path
+from .web.routes import router as ui_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -29,7 +26,6 @@ async def lifespan(app: FastAPI):
 # Create FastAPI app
 app = FastAPI(
     title=settings.APP_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
 )
 
@@ -82,15 +78,8 @@ app.add_middleware(
 )
 
 # Include API router
+app.include_router(ui_router)
 app.include_router(api_router, prefix=settings.API_V1_STR)
-
-
-@app.get("/")
-async def root():
-    return {
-        "app_name": settings.APP_NAME,
-        "message": "Welcome to UserInfo API. Access /userinfo with a valid token."
-    }
 
 
 

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy — Attribute Authority{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Privacy Policy (HDF) -->
+        <div class="card border-0 shadow-lg mb-4">
+            <div class="card-header bg-transparent border-bottom border-secondary border-opacity-25 py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-check fs-4 text-primary"></i>
+                    <h1 class="h4 fw-bold mb-0">Privacy Policy</h1>
+                </div>
+            </div>
+            <div class="card-body p-4 p-md-5">
+                <h2 class="h5 fw-bold mb-3">Description of the Service</h2>
+                <p class="text-body-secondary">
+                    The Attribute Authority (AA) issues, verifies, and manages user attributes and attestations so identities,
+                    group membership, affiliations, and authorization policies can be handled consistently across linked services
+                    (e.g., Helmholtz Data Federation). AA serves as a central service for authentication‐ and authorization‐related
+                    attribute management. The service is operated by the Karlsruhe Institute of Technology (KIT).
+                </p>
+
+                <hr class="my-4 border-secondary border-opacity-25">
+
+                <h2 class="h5 fw-bold mb-3">What Personal Data Is Collected and Why</h2>
+                <p class="text-body-secondary mb-2">Each time you access the AA the following information is collected:</p>
+                <ul class="text-body-secondary">
+                    <li>First name, last name, email address, organization (if provided), and identifier released by your Identity Provider / OIDC Provider (IdP/OP).</li>
+                </ul>
+                <p class="text-body-secondary mb-2">This data is necessary for account management purposes. Log records of your access contain:</p>
+                <ul class="text-body-secondary">
+                    <li>Personal name, email, identifier</li>
+                    <li>The network (IP) address from which you access the AA</li>
+                    <li>Time and date of access</li>
+                    <li>Details of actions you perform (e.g., attribute requests/updates, invitations sent)</li>
+                </ul>
+                <p class="text-body-secondary">
+                    This data is necessary to ensure that the AA is reliable and secure, including assisting in the analysis
+                    of reported problems, contacting you if a problem is identified with your account, and responding to
+                    security incidents.
+                </p>
+
+                <hr class="my-4 border-secondary border-opacity-25">
+
+                <h2 class="h5 fw-bold mb-3">Processed Data (OIDC Scopes)</h2>
+                <p class="text-body-secondary mb-2">The following OIDC scopes are requested from your Identity Provider:</p>
+                <div class="d-flex flex-wrap gap-2 mb-3">
+                    <span class="badge bg-primary bg-opacity-25 text-primary-emphasis border border-primary border-opacity-25 px-3 py-2">openid</span>
+                    <span class="badge bg-primary bg-opacity-25 text-primary-emphasis border border-primary border-opacity-25 px-3 py-2">profile</span>
+                    <span class="badge bg-primary bg-opacity-25 text-primary-emphasis border border-primary border-opacity-25 px-3 py-2">email</span>
+                </div>
+                <p class="text-body-secondary mb-2">Example of released claims (provider dependent):</p>
+                <ul class="text-body-secondary">
+                    <li><code>name</code>, <code>given_name</code>, <code>family_name</code></li>
+                    <li><code>email</code></li>
+                    <li><code>preferred_username</code> / <code>sub</code> (subject)</li>
+                    <li><code>iss</code> (issuer)</li>
+                    <li><code>groups</code> / <code>affiliations</code> (if released)</li>
+                </ul>
+
+                <hr class="my-4 border-secondary border-opacity-25">
+
+                <h2 class="h5 fw-bold mb-3">Who Your Personal Data Is Disclosed To</h2>
+                <p class="text-body-secondary">
+                    Personal data is not regularly disclosed to third parties. Data may be shared with authorized KIT
+                    operational staff, linked services strictly for authorization decisions, and incident response teams
+                    where required by policy or law.
+                </p>
+
+                <hr class="my-4 border-secondary border-opacity-25">
+
+                <h2 class="h5 fw-bold mb-3">Data Retention</h2>
+                <ul class="text-body-secondary">
+                    <li>Attribute records and invitation metadata are stored while active and may be retained up to <strong>24 months</strong> after last activity.</li>
+                    <li>Access logs are deleted after <strong>12 months</strong>.</li>
+                    <li>Users may request earlier removal by contacting the service.</li>
+                </ul>
+
+                <hr class="my-4 border-secondary border-opacity-25">
+
+                <h2 class="h5 fw-bold mb-3">Transfer of Personal Data Outside the EU/EEA</h2>
+                <p class="text-body-secondary">
+                    Personal data is not intentionally transferred outside the EU/EEA. If a sub-processed service outside
+                    the EU is required, standard contractual safeguards will be applied.
+                </p>
+
+                <hr class="my-4 border-secondary border-opacity-25">
+
+                <h2 class="h5 fw-bold mb-3">How to Access, Rectify, and Delete Your Data</h2>
+                <p class="text-body-secondary">
+                    To rectify data released by your Home Organisation / IdP, contact its operators. For data stored by the
+                    Attribute Authority (attributes, invitations, logs), contact the service below to request access,
+                    correction, or deletion (subject to legal/audit constraints).
+                </p>
+
+                <hr class="my-4 border-secondary border-opacity-25">
+
+                <h2 class="h5 fw-bold mb-3">Data Protection Code of Conduct</h2>
+                <p class="text-body-secondary">
+                    Personal data is protected according to the
+                    <a href="https://geant.org/code-of-conduct/" target="_blank" class="text-primary">GÉANT Code of Conduct for Service Providers</a>
+                    and applicable EU and German data protection law.
+                </p>
+
+                <hr class="my-4 border-secondary border-opacity-25">
+
+                <h2 class="h5 fw-bold mb-3">Contact Information</h2>
+                <div class="card bg-transparent border border-secondary border-opacity-25">
+                    <div class="card-body">
+                        <p class="mb-1 fw-semibold">Karlsruhe Institute of Technology (KIT) / SCC</p>
+                        <p class="text-body-secondary small mb-1">Herrmann-von-Helmholtz-Platz 1, 76344 Eggenstein-Leopoldshafen</p>
+                        <p class="text-body-secondary small mb-1">
+                            <i class="bi bi-envelope me-1"></i>
+                            <a href="mailto:amin.mahnamfar@kit.edu" class="text-primary">amin.mahnamfar@kit.edu</a>
+                        </p>
+                        <p class="text-body-secondary small mb-0">
+                            <i class="bi bi-telephone me-1"></i>+49 721 6082 4659
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <h3 class="h6 fw-bold mb-2">Supervisory Authorities (DPAs)</h3>
+                    <ul class="text-body-secondary small">
+                        <li><a href="https://www.bfdi.bund.de/EN/Home/home_node.html" target="_blank" class="text-primary">German DPA (BfDI)</a></li>
+                        <li><a href="https://www.baden-wuerttemberg.datenschutz.de/online-beschwerde/" target="_blank" class="text-primary">Baden-Württemberg DPA — File a complaint</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

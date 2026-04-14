@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Invitations — Attribute Authority{% endblock %}
+
+{% block content %}
+<section class="hero-panel rounded-4 p-4 p-lg-5 surface-card mb-4">
+    <span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis border border-primary-subtle mb-3">Invitation Management</span>
+    <h1 class="display-6 fw-semibold card-title-tight mb-2">Create and manage invitation links.</h1>
+    <p class="text-body-secondary mb-0">Generate invitation URLs for eligible attribute definitions, review their usage, and revoke them when they are no longer needed.</p>
+</section>
+
+<div class="row g-4">
+    <div class="col-xl-4">
+        <div class="card surface-card h-100">
+            <div class="card-header bg-body py-3">
+                <h2 class="h5 mb-1">Create Invitation</h2>
+                <p class="mb-0 small text-body-secondary">Invitation URLs now point at the dedicated UI route instead of the API namespace.</p>
+            </div>
+            <div class="card-body">
+                {% if attribute_options %}
+                <form action="/invitations/manage" method="post" class="d-grid gap-3">
+                    <div>
+                        <label for="group-key" class="form-label">Attribute Definition</label>
+                        <select id="group-key" name="group_key" class="form-select" required>
+                            {% for attribute in attribute_options %}
+                            <option value="{{ attribute.name }}">{{ attribute.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="group-value" class="form-label">Group Value</label>
+                        <input id="group-value" name="group_value" class="form-control" required>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="max-uses" class="form-label">Max Uses</label>
+                            <input id="max-uses" name="max_uses" type="number" min="1" value="1" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="expires-in" class="form-label">Expires In (seconds)</label>
+                            <input id="expires-in" name="expires_in_seconds" type="number" min="60" value="86400" class="form-control" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="invited-user-sub" class="form-label">Target User Subject</label>
+                        <input id="invited-user-sub" name="invited_user_sub" class="form-control" placeholder="Optional targeted invitation">
+                    </div>
+                    <div>
+                        <label for="invited-user-iss" class="form-label">Target User Issuer</label>
+                        <input id="invited-user-iss" name="invited_user_iss" class="form-control" placeholder="Optional targeted invitation">
+                    </div>
+                    <button type="submit" class="btn btn-primary d-inline-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-plus-circle"></i>
+                        Create Invitation
+                    </button>
+                </form>
+                {% else %}
+                <div class="alert alert-warning mb-0">
+                    No enabled attribute definitions are available for invitations. Create or enable an attribute definition first.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-8">
+        <div class="card surface-card overflow-hidden">
+            <div class="card-header bg-body py-3">
+                <h2 class="h5 mb-1">Your Invitations</h2>
+                <p class="mb-0 small text-body-secondary">{{ invitation_rows|length }} invitations created from this account.</p>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="px-4 py-3 border-0">Group</th>
+                                <th class="px-4 py-3 border-0">URL</th>
+                                <th class="px-4 py-3 border-0">Status</th>
+                                <th class="px-4 py-3 border-0">Usage</th>
+                                <th class="px-4 py-3 border-0">Expires</th>
+                                <th class="px-4 py-3 border-0 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in invitation_rows %}
+                            <tr>
+                                <td class="px-4 py-3">
+                                    <div class="fw-semibold">{{ row.record.group_value }}</div>
+                                    <div class="small text-body-secondary">{{ row.record.group_key }}</div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <input class="form-control form-control-sm copy-field" value="{{ row.invitation_url }}" readonly>
+                                </td>
+                                <td class="px-4 py-3">
+                                    {% if row.record.status == 'revoked' %}
+                                    <span class="badge text-bg-danger">Revoked</span>
+                                    {% elif row.is_valid %}
+                                    <span class="badge text-bg-success">Active</span>
+                                    {% else %}
+                                    <span class="badge text-bg-secondary">{{ row.record.status|capitalize }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="small text-body-secondary">{{ row.record.current_uses }} / {{ row.record.max_uses }}</span>
+                                </td>
+                                <td class="px-4 py-3 small text-body-secondary">{{ row.record.expires_at }}</td>
+                                <td class="px-4 py-3 text-end">
+                                    <div class="d-inline-flex gap-2">
+                                        <a href="/invitations/{{ row.record.hash }}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-2">
+                                            <i class="bi bi-eye"></i>
+                                            View
+                                        </a>
+                                        {% if row.record.status == 'active' %}
+                                        <form action="/invitations/{{ row.record.hash }}/revoke" method="post" onsubmit="return confirm('Revoke this invitation?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-2">
+                                                <i class="bi bi-slash-circle"></i>
+                                                Revoke
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-body-secondary">
+                                    <i class="bi bi-envelope-paper fs-1 d-block mb-3 text-secondary"></i>
+                                    No invitations created yet.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

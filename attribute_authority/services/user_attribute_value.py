@@ -119,6 +119,21 @@ async def get_user_attributes(
     return result
 
 
+async def get_user_attributes_by_user_id(
+    db: AsyncSession,
+    user_id: int,
+) -> Dict[str, List[Any]]:
+    """Get a user's attributes by local user ID."""
+    user_values = await get_by_user(db, user_id)
+
+    result = defaultdict(list)
+    for uv in user_values:
+        attr_name = uv.attribute_definition.name
+        result[attr_name].append({"id": uv.id, "value": uv.value})
+
+    return result
+
+
 async def get_all_user_attributes(
     db: AsyncSession,
 ) -> Dict[int, Dict[str, List[Any]]]:

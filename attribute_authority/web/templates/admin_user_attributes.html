@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}User Attributes: {{ target_user.name or target_user.sub }} — Attribute Authority{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a href="/admin/users" class="text-primary text-decoration-none">Users</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ target_user.name or target_user.email or target_user.sub }}</li>
+    </ol>
+</nav>
+
+<div class="card surface-card border-0 mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-center gap-3">
+            <div class="app-avatar d-flex align-items-center justify-content-center rounded-circle text-white fw-bold fs-4 flex-shrink-0">
+                {% set display_name = target_user.name or target_user.email or target_user.sub or 'U' %}
+                {{ display_name[0]|upper }}
+            </div>
+            <div>
+                <h1 class="h4 fw-bold mb-1">
+                    {{ target_user.name or target_user.email or 'Unknown User' }}
+                </h1>
+                <div class="d-flex flex-wrap gap-3 text-body-secondary small">
+                    {% if target_user.email %}
+                    <span><i class="bi bi-envelope me-1"></i>{{ target_user.email }}</span>
+                    {% endif %}
+                    <span><i class="bi bi-fingerprint me-1"></i><code class="text-body-secondary mono-break">{{ target_user.sub }}</code></span>
+                    <span><i class="bi bi-building me-1"></i><code class="text-body-secondary mono-break">{{ target_user.iss }}</code></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card surface-card border-0 overflow-hidden">
+    <div class="card-header bg-transparent border-bottom border-secondary border-opacity-25 py-3">
+        <h2 class="h5 fw-semibold mb-0">
+            <i class="bi bi-award me-2 text-primary"></i>Attributes &amp; Entitlements
+        </h2>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-3 border-bottom border-secondary border-opacity-25 text-body-secondary fw-semibold small text-uppercase" style="width:30%;">Attribute</th>
+                        <th class="px-4 py-3 border-bottom border-secondary border-opacity-25 text-body-secondary fw-semibold small text-uppercase">Values</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if attributes %}
+                        {% for key, value in attributes.items() %}
+                        <tr>
+                            <td class="px-4 py-3 fw-semibold">
+                                <i class="bi bi-tag-fill text-primary me-2"></i>{{ key }}
+                            </td>
+                            <td class="px-4 py-3">
+                                {% if value is sequence and value is not string %}
+                                    {% for item in value %}
+                                        {% if item is mapping %}
+                                            <span class="badge bg-primary bg-opacity-25 text-primary-emphasis border border-primary border-opacity-25 fs-6 me-1 mb-1 px-3 py-2">
+                                                {{ item.get('value', item) }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-primary bg-opacity-25 text-primary-emphasis border border-primary border-opacity-25 fs-6 me-1 mb-1 px-3 py-2">
+                                                {{ item }}
+                                            </span>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% elif value is mapping %}
+                                    <span class="badge bg-primary bg-opacity-25 text-primary-emphasis border border-primary border-opacity-25 fs-6 mb-1 px-3 py-2">
+                                        {{ value.get('value', value) }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-primary bg-opacity-25 text-primary-emphasis border border-primary border-opacity-25 fs-6 mb-1 px-3 py-2">
+                                        {{ value }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="2" class="text-center py-5 text-body-secondary">
+                                <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+                                No attributes found for this user.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="/admin/users" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1">
+        <i class="bi bi-arrow-left"></i>Back to Users
+    </a>
+</div>
+{% endblock %}

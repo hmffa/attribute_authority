@@ -21,6 +21,12 @@ async def get_by_id(db: AsyncSession, privilege_id: int) -> Optional[Privilege]:
     return result.scalars().first()
 
 
+async def get_all(db: AsyncSession) -> List[Privilege]:
+    """List all privileges."""
+    result = await db.execute(select(Privilege).order_by(Privilege.created_at.desc()))
+    return result.scalars().all()
+
+
 async def find_duplicate_privilege(
     db: AsyncSession,
     grantee_id: int,
@@ -72,6 +78,12 @@ async def create_privilege(db: AsyncSession, privilege: Privilege) -> Privilege:
     return privilege
 
 
+async def delete_privilege(db: AsyncSession, privilege: Privilege) -> None:
+    """Delete a privilege record."""
+    await db.delete(privilege)
+    await db.commit()
+
+
 # --- Business Logic ---
 
 async def update_privilege(
@@ -95,6 +107,20 @@ async def update_privilege(
     await db.commit()
     await db.refresh(db_obj)
     return db_obj
+
+
+async def get_or_404(db: AsyncSession, privilege_id: int) -> Privilege:
+    """Get a privilege or raise 404."""
+    privilege = await get_by_id(db, privilege_id)
+    if not privilege:
+        raise HTTPException(status_code=404, detail="Privilege not found")
+    return privilege
+
+
+async def delete(db: AsyncSession, privilege_id: int) -> None:
+    """Delete a privilege by ID."""
+    privilege = await get_or_404(db, privilege_id)
+    await delete_privilege(db, privilege)
 
 
 async def assign_privilege(

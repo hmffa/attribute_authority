@@ -36,7 +36,7 @@ class PrivilegeUpdate(BaseModel):
     action: Optional[PrivilegeAction] = None
     attribute_id: Optional[int] = None
     value_restriction: Optional[str] = None
-    target_restriction: Optional[Dict] = None
+    target_restriction: Optional[list[Dict]] = None
     is_delegable: Optional[bool] = None
 
 

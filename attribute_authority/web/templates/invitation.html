@@ -1,55 +1,88 @@
 {% extends "base.html" %}
 
-{% block title %}Group Invitation - Attribute Authority Demo{% endblock %}
+{% block title %}Invitation — Attribute Authority{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center mt-4">
-    <div class="col-md-8 col-lg-6">
-        <div class="card shadow-sm text-center">
-            <div class="card-header bg-white py-3">
-                <h4 class="mb-0 text-primary">Invitation to Join Group</h4>
+    <div class="col-lg-9 col-xl-8">
+        <div class="card surface-card overflow-hidden">
+            <div class="card-header bg-body py-3 px-4 d-flex align-items-center gap-3">
+                <span class="icon-circle d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary border border-primary-subtle">
+                    <i class="bi bi-envelope-paper-heart fs-4"></i>
+                </span>
+                <div>
+                    <h1 class="h4 mb-1">Invitation to Join a Group</h1>
+                    <p class="mb-0 small text-body-secondary">Review the invitation details, preview the QR code, and accept or reject the request.</p>
+                </div>
             </div>
             
-            <div class="card-body p-4 p-md-5">
-                <p class="lead mb-2">You have been invited to join:</p>
-                <h2 class="mb-4">{{ invitation.group_value }}</h2>
-                
-                <div class="row text-start mb-4 justify-content-center">
-                    <div class="col-12 col-md-10">
-                        <ul class="list-group list-group-flush rounded border">
-                            <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+            <div class="card-body p-4 p-lg-5">
+                <div class="row g-4 align-items-start">
+                    <div class="col-lg-7">
+                        <p class="text-body-secondary text-uppercase fw-semibold small mb-2">Group Value</p>
+                        <h2 class="display-6 fw-semibold mb-4">{{ invitation.group_value }}</h2>
+
+                        <ul class="list-group list-group-flush rounded border mb-4">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <strong>Attribute Key</strong>
+                                <span class="badge text-bg-secondary">{{ invitation.group_key }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <strong>Expires:</strong> 
                                 <span class="text-muted">{{ expiry_at }}</span>
                             </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <strong>Remaining Spots:</strong> 
                                 <span class="badge bg-secondary rounded-pill">{{ remaining_uses }} of {{ invitation.max_uses }}</span>
                             </li>
+                            {% if invitation.invited_user_sub %}
+                            <li class="list-group-item d-flex flex-column align-items-start gap-2">
+                                <strong>Targeted User</strong>
+                                <div class="small text-body-secondary">{{ invitation.invited_user_sub }}</div>
+                                {% if invitation.invited_user_iss %}
+                                <div class="small text-body-secondary">{{ invitation.invited_user_iss }}</div>
+                                {% endif %}
+                            </li>
+                            {% endif %}
                         </ul>
+
+                        <div class="mb-4">
+                            <label for="invitation-url" class="form-label fw-semibold">Invitation URL</label>
+                            <input id="invitation-url" type="text" class="form-control copy-field" value="{{ invitation_url }}" readonly>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <a href="/invitations/{{ invitation.hash }}/accept" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                                <i class="bi bi-check2-circle"></i>
+                                Review Acceptance Flow
+                            </a>
+                            <form action="/invitations/{{ invitation.hash }}/confirm" method="post" class="d-flex gap-2 flex-wrap">
+                                <button type="submit" name="action" value="accept" class="btn btn-success d-inline-flex align-items-center gap-2">
+                                    <i class="bi bi-check-circle"></i>
+                                    Accept
+                                </button>
+                                <button type="submit" name="action" value="reject" class="btn btn-outline-danger d-inline-flex align-items-center gap-2">
+                                    <i class="bi bi-x-circle"></i>
+                                    Reject
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                </div>
 
-                <div class="mb-4">
-                    <p class="text-muted mb-2 fw-bold">Scan to open via mobile:</p>
-                    <div id="qrcode" class="d-inline-block border p-3 bg-white shadow-sm rounded"></div>
-                </div>
-
-                <hr class="my-4">
-
-                <div class="mt-4">
-                    <p class="text-muted mb-3">Please review the invitation and choose to approve or reject your membership:</p>
-                    
-                    <a href="{{ invitation_url }}" class="btn btn-outline-primary w-100 mb-3 btn-lg">Accept Invitation Link</a>
-                    
-                    <form action="/api/v1/invitations/{{ invitation.hash }}/confirm" method="post" class="d-flex gap-2 justify-content-center">
-                        <button type="submit" name="action" value="accept" class="btn btn-success flex-grow-1">Approve</button>
-                        <button type="submit" name="action" value="reject" class="btn btn-danger flex-grow-1">Reject</button>
-                    </form>
+                    <div class="col-lg-5">
+                        <div class="card bg-body-secondary bg-opacity-25 border-0 h-100">
+                            <div class="card-body text-center p-4">
+                                <p class="text-body-secondary text-uppercase fw-semibold small mb-3">QR Preview</p>
+                                <div id="qrcode" class="d-inline-flex align-items-center justify-content-center border rounded-4 p-4 bg-white shadow-sm mb-3"></div>
+                                <p class="small text-body-secondary mb-0">Scan this code on a mobile device to open the invitation directly in the browser.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <div class="card-footer bg-light text-muted small py-3">
-                If you did not expect this invitation, you can safely ignore this message.
+            <div class="card-footer bg-body-secondary bg-opacity-25 text-body-secondary small py-3 px-4">
+                If you did not expect this invitation, you can safely ignore it.
             </div>
         </div>
     </div>
@@ -57,35 +90,30 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- qrcode-generator CDN -->
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         var invitationUrl = "{{ invitation_url }}";
-        
-        if (invitationUrl) {
-            try {
-                // Generate QR Code dynamically using qrcode-generator
-                var typeNumber = 0; // Auto-detect size
-                var errorCorrectionLevel = 'M';
-                var qr = qrcode(typeNumber, errorCorrectionLevel);
-                qr.addData(invitationUrl);
-                qr.make();
-                
-                // Render QR Code inside the placeholder container
-                var qrContainer = document.getElementById('qrcode');
-                // The library creates an img tag directly
-                qrContainer.innerHTML = qr.createImgTag(5, 10);
-                
-                // Add Bootstrap fluid class to the generated img tag
-                var img = qrContainer.querySelector('img');
-                if (img) {
-                    img.classList.add('img-fluid');
-                }
-            } catch (e) {
-                console.error("Could not generate QR code", e);
-                document.getElementById('qrcode').innerHTML = '<span class="text-danger">QR Code not available</span>';
+
+        if (!invitationUrl) {
+            return;
+        }
+
+        try {
+            var qr = qrcode(0, 'M');
+            qr.addData(invitationUrl);
+            qr.make();
+
+            var qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = qr.createImgTag(5, 10);
+
+            var img = qrContainer.querySelector('img');
+            if (img) {
+                img.classList.add('img-fluid');
             }
+        } catch (e) {
+            console.error("Could not generate QR code", e);
+            document.getElementById('qrcode').innerHTML = '<span class="text-danger">QR Code not available</span>';
         }
     });
 </script>

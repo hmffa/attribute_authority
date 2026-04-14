@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Privileges — Attribute Authority{% endblock %}
+
+{% block content %}
+<section class="hero-panel rounded-4 p-4 p-lg-5 surface-card mb-4">
+    <span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis border border-primary-subtle mb-3">Authorization</span>
+    <h1 class="display-6 fw-semibold card-title-tight mb-2">Grant and delegate privileges.</h1>
+    <p class="text-body-secondary mb-0">This page exposes the privilege model that drives attribute creation, value visibility, and delegated management rights.</p>
+</section>
+
+<div class="row g-4">
+    <div class="col-xl-4">
+        <div class="d-grid gap-4">
+            <div class="card surface-card">
+                <div class="card-header bg-body py-3">
+                    <h2 class="h5 mb-1">Grant Privilege</h2>
+                    <p class="mb-0 small text-body-secondary">Create a privilege directly for a selected user.</p>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/privileges/grant" method="post" class="d-grid gap-3">
+                        <div>
+                            <label for="grant-user" class="form-label">Grantee</label>
+                            <select id="grant-user" name="grantee_user_id" class="form-select" required>
+                                <option value="" selected disabled>Select a user</option>
+                                {% for user in user_options %}
+                                <option value="{{ user.id }}">{{ user.name or user.email or user.sub }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="grant-action" class="form-label">Action</label>
+                            <select id="grant-action" name="action" class="form-select" required>
+                                {% for action in actions %}
+                                <option value="{{ action.value }}">{{ action.value }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="grant-attribute" class="form-label">Attribute Scope</label>
+                            <select id="grant-attribute" name="attribute_id" class="form-select">
+                                <option value="">All attributes</option>
+                                {% for attribute in attribute_options %}
+                                <option value="{{ attribute.id }}">{{ attribute.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="grant-value" class="form-label">Value Restriction</label>
+                            <textarea id="grant-value" name="value_restriction" class="form-control" rows="2" placeholder="Optional regex"></textarea>
+                        </div>
+                        <div>
+                            <label for="grant-target" class="form-label">Target Restriction</label>
+                            <textarea id="grant-target" name="target_restriction" class="form-control copy-field" rows="3" placeholder='[{"attribute": "^value$"}]'></textarea>
+                        </div>
+                        <div class="form-check">
+                            <input id="grant-delegable" name="is_delegable" type="checkbox" class="form-check-input">
+                            <label class="form-check-label" for="grant-delegable">Delegable</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary d-inline-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-plus-circle"></i>
+                            Grant Privilege
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card surface-card">
+                <div class="card-header bg-body py-3">
+                    <h2 class="h5 mb-1">Delegate Privilege</h2>
+                    <p class="mb-0 small text-body-secondary">Delegate a subset of your own delegable privileges.</p>
+                </div>
+                <div class="card-body">
+                    <form action="/admin/privileges/delegate" method="post" class="d-grid gap-3">
+                        <div>
+                            <label for="delegate-user" class="form-label">Grantee</label>
+                            <select id="delegate-user" name="grantee_user_id" class="form-select" required>
+                                <option value="" selected disabled>Select a user</option>
+                                {% for user in user_options %}
+                                <option value="{{ user.id }}">{{ user.name or user.email or user.sub }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="delegate-action" class="form-label">Action</label>
+                            <select id="delegate-action" name="action" class="form-select" required>
+                                {% for action in actions %}
+                                <option value="{{ action.value }}">{{ action.value }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="delegate-attribute" class="form-label">Attribute Scope</label>
+                            <select id="delegate-attribute" name="attribute_id" class="form-select">
+                                <option value="">All attributes</option>
+                                {% for attribute in attribute_options %}
+                                <option value="{{ attribute.id }}">{{ attribute.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="delegate-value" class="form-label">Value Restriction</label>
+                            <textarea id="delegate-value" name="value_restriction" class="form-control" rows="2" placeholder="Optional regex"></textarea>
+                        </div>
+                        <div>
+                            <label for="delegate-target" class="form-label">Target Restriction</label>
+                            <textarea id="delegate-target" name="target_restriction" class="form-control copy-field" rows="3" placeholder='[{"attribute": "^value$"}]'></textarea>
+                        </div>
+                        <div class="form-check">
+                            <input id="delegate-delegable" name="is_delegable" type="checkbox" class="form-check-input">
+                            <label class="form-check-label" for="delegate-delegable">Delegable</label>
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary d-inline-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-arrow-left-right"></i>
+                            Delegate Privilege
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-8">
+        <div class="card surface-card overflow-hidden">
+            <div class="card-header bg-body py-3">
+                <h2 class="h5 mb-1">Current Privileges</h2>
+                <p class="mb-0 small text-body-secondary">{{ privilege_entries|length }} privilege entries currently stored.</p>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="px-4 py-3 border-0">Grantee</th>
+                                <th class="px-4 py-3 border-0">Action</th>
+                                <th class="px-4 py-3 border-0">Scope</th>
+                                <th class="px-4 py-3 border-0">Restrictions</th>
+                                <th class="px-4 py-3 border-0">Delegable</th>
+                                <th class="px-4 py-3 border-0 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for privilege_entry in privilege_entries %}
+                            <tr>
+                                <td class="px-4 py-3">
+                                    <div class="fw-semibold">{{ privilege_entry.grantee.name or privilege_entry.grantee.email or privilege_entry.grantee.sub }}</div>
+                                    <div class="small text-body-secondary mono-break">{{ privilege_entry.grantee.sub }}</div>
+                                </td>
+                                <td class="px-4 py-3"><span class="badge text-bg-primary">{{ privilege_entry.action.value }}</span></td>
+                                <td class="px-4 py-3">
+                                    {% if privilege_entry.attribute %}
+                                    <span class="badge text-bg-secondary">{{ privilege_entry.attribute.name }}</span>
+                                    {% else %}
+                                    <span class="text-body-secondary small">All attributes</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 small">
+                                    {% if privilege_entry.value_restriction %}
+                                    <div><strong>Value:</strong> <code class="mono-break">{{ privilege_entry.value_restriction }}</code></div>
+                                    {% endif %}
+                                    {% if privilege_entry.target_restriction %}
+                                    <div><strong>Target:</strong> <code class="mono-break">{{ privilege_entry.target_restriction|tojson }}</code></div>
+                                    {% endif %}
+                                    {% if not privilege_entry.value_restriction and not privilege_entry.target_restriction %}
+                                    <span class="text-body-secondary">None</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3">
+                                    <span class="badge {% if privilege_entry.is_delegable %}text-bg-success{% else %}text-bg-secondary{% endif %}">
+                                        {{ 'Yes' if privilege_entry.is_delegable else 'No' }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-end">
+                                    <div class="d-inline-flex gap-2">
+                                        <a href="/admin/privileges/{{ privilege_entry.id }}/edit" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-2">
+                                            <i class="bi bi-pencil-square"></i>
+                                            Edit
+                                        </a>
+                                        <form action="/admin/privileges/{{ privilege_entry.id }}/delete" method="post" onsubmit="return confirm('Delete this privilege?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-2">
+                                                <i class="bi bi-trash"></i>
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-body-secondary">
+                                    <i class="bi bi-shield-lock fs-1 d-block mb-3 text-secondary"></i>
+                                    No privileges have been created yet.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

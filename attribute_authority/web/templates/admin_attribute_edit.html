@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Attribute Definition — Attribute Authority{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a href="/admin/attributes" class="text-decoration-none">Definitions</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ attribute_definition.name }}</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+        <div class="card surface-card overflow-hidden">
+            <div class="card-header bg-body py-3">
+                <h1 class="h4 mb-1">Edit Attribute Definition</h1>
+                <p class="mb-0 small text-body-secondary">Update display metadata, value restrictions, and availability for this definition.</p>
+            </div>
+            <div class="card-body p-4 p-lg-5">
+                <form action="/admin/attributes/{{ attribute_definition.id }}/edit" method="post" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="attribute-name" class="form-label">Name</label>
+                        <input id="attribute-name" name="name" class="form-control" value="{{ attribute_definition.name }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="attribute-created" class="form-label">Created At</label>
+                        <input id="attribute-created" class="form-control" value="{{ attribute_definition.created_at }}" readonly>
+                    </div>
+                    <div class="col-12">
+                        <label for="attribute-description" class="form-label">Description</label>
+                        <textarea id="attribute-description" name="description" class="form-control" rows="4">{{ attribute_definition.description or '' }}</textarea>
+                    </div>
+                    <div class="col-12">
+                        <label for="attribute-value-restriction" class="form-label">Value Restriction</label>
+                        <textarea id="attribute-value-restriction" name="value_restriction" class="form-control" rows="4">{{ attribute_definition.value_restriction or '' }}</textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check mt-2">
+                            <input id="attribute-multivalue" name="is_multivalue" type="checkbox" class="form-check-input" {% if attribute_definition.is_multivalue %}checked{% endif %}>
+                            <label class="form-check-label" for="attribute-multivalue">Allow multiple values</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check mt-2">
+                            <input id="attribute-enabled" name="enabled" type="checkbox" class="form-check-input" {% if attribute_definition.enabled %}checked{% endif %}>
+                            <label class="form-check-label" for="attribute-enabled">Enabled</label>
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex flex-wrap gap-2 justify-content-end pt-3">
+                        <a href="/admin/attributes" class="btn btn-outline-secondary">Back</a>
+                        <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-save"></i>
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

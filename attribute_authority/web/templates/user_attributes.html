@@ -1,31 +1,41 @@
 {% extends "base.html" %}
 
-{% block title %}My Attributes - Attribute Authority Demo{% endblock %}
+{% block title %}My Attributes — Attribute Authority{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">
-        Welcome, 
-        {% if claims and claims.name %}
-            {{ claims.name }}
-        {% elif claims and claims.email %}
-            {{ claims.email }}
-        {% elif claims and claims.sub %}
-            {{ claims.sub }}
-        {% else %}
-            User
-        {% endif %}
-    </h2>
-    <button class="btn btn-success" type="button">Generate Group Invite</button>
-</div>
+<section class="hero-panel rounded-4 p-4 p-lg-5 surface-card mb-4">
+    <div class="d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-4">
+        <div>
+            <span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis border border-primary-subtle mb-3">Self Service</span>
+            <h1 class="display-6 fw-semibold card-title-tight mb-2">
+                {{ claims.name or claims.email or claims.sub or 'Your Attribute View' }}
+            </h1>
+            <p class="text-body-secondary mb-0">Review the values currently issued to your account and jump into invitation management when you need to share delegated access.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="/invitations/manage" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                <i class="bi bi-envelope-paper"></i>
+                Manage Invitations
+            </a>
+            <a href="/api/v1/openapi.json" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+                <i class="bi bi-braces"></i>
+                OpenAPI JSON
+            </a>
+        </div>
+    </div>
+</section>
 
-<div class="card shadow-sm">
-    <div class="card-header bg-white py-3">
-        <h5 class="mb-0">Your Attributes & Entitlements</h5>
+<div class="card surface-card overflow-hidden">
+    <div class="card-header bg-body py-3 d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="h5 mb-1">Your Attributes &amp; Entitlements</h2>
+            <p class="mb-0 small text-body-secondary">Values shown here come directly from the Attribute Authority service layer.</p>
+        </div>
+        <span class="badge rounded-pill text-bg-secondary">{{ attributes|length }} groups</span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-striped table-hover mb-0">
+            <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
                         <th class="px-4 py-3 border-0">Attribute Name</th>
@@ -36,28 +46,33 @@
                     {% if attributes %}
                         {% for key, value in attributes.items() %}
                         <tr>
-                            <td class="px-4 py-3 fw-bold align-middle">{{ key }}</td>
+                            <td class="px-4 py-3 fw-semibold align-middle">
+                                <span class="d-inline-flex align-items-center gap-2">
+                                    <i class="bi bi-tag text-primary"></i>{{ key }}
+                                </span>
+                            </td>
                             <td class="px-4 py-3 align-middle">
                                 {% if value is sequence and value is not string %}
                                     {% for item in value %}
                                         {% if item is mapping %}
-                                            <span class="badge bg-primary fs-6 me-1 mb-1">{{ item.get('value', item) }}</span>
+                                            <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle fs-6 me-1 mb-1 px-3 py-2">{{ item.get('value', item) }}</span>
                                         {% else %}
-                                            <span class="badge bg-primary fs-6 me-1 mb-1">{{ item }}</span>
+                                            <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle fs-6 me-1 mb-1 px-3 py-2">{{ item }}</span>
                                         {% endif %}
                                     {% endfor %}
                                 {% elif value is mapping %}
-                                    <span class="badge bg-primary fs-6 mb-1">{{ value.get('value', value) }}</span>
+                                    <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle fs-6 mb-1 px-3 py-2">{{ value.get('value', value) }}</span>
                                 {% else %}
-                                    <span class="badge bg-primary fs-6 mb-1">{{ value }}</span>
+                                    <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle fs-6 mb-1 px-3 py-2">{{ value }}</span>
                                 {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="2" class="text-center py-5 text-muted">
-                                <i>No attributes found for your account.</i>
+                            <td colspan="2" class="text-center py-5 text-body-secondary">
+                                <i class="bi bi-inbox fs-1 d-block mb-3 text-secondary"></i>
+                                No attributes were found for your account.
                             </td>
                         </tr>
                     {% endif %}

@@ -7,16 +7,30 @@
     <title>{% block title %}Attribute Authority{% endblock %}</title>
     <script>
         (function() {
-            const media = window.matchMedia('(prefers-color-scheme: dark)');
-            const applyTheme = function() {
-                document.documentElement.setAttribute('data-bs-theme', media.matches ? 'dark' : 'light');
-            };
-            applyTheme();
-            if (typeof media.addEventListener === 'function') {
-                media.addEventListener('change', applyTheme);
-            } else if (typeof media.addListener === 'function') {
-                media.addListener(applyTheme);
+            var storageKey = 'aa-theme-preference';
+            var root = document.documentElement;
+            var media = window.matchMedia('(prefers-color-scheme: dark)');
+            var storedPreference = null;
+
+            try {
+                storedPreference = window.localStorage.getItem(storageKey);
+            } catch (error) {
+                storedPreference = null;
             }
+
+            if (
+                storedPreference !== 'light'
+                && storedPreference !== 'dark'
+                && storedPreference !== 'system'
+            ) {
+                storedPreference = 'system';
+            }
+
+            root.setAttribute('data-theme-preference', storedPreference);
+            root.setAttribute(
+                'data-bs-theme',
+                storedPreference === 'system' ? (media.matches ? 'dark' : 'light') : storedPreference,
+            );
         })();
     </script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
@@ -25,80 +39,198 @@
     {% block head %}{% endblock %}
 </head>
 <body class="d-flex flex-column">
-    <nav class="navbar navbar-expand-lg border-bottom sticky-top navbar-blur mb-4">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center gap-3" href="/">
-                <span class="icon-circle d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary border border-primary-subtle">
+    <nav class="navbar navbar-expand-xl sticky-top app-header mb-4">
+        <div class="container app-header-shell">
+            <a class="navbar-brand app-brand d-flex align-items-center gap-3 me-xl-4" href="/">
+                <span class="app-brand-mark d-inline-flex align-items-center justify-content-center">
                     <i class="bi bi-shield-lock fs-4"></i>
                 </span>
-                <span>
-                    <span class="d-block fw-semibold">Attribute Authority</span>
-                    <span class="d-block small text-body-secondary">Bootstrap UI for identity attributes and authorization</span>
+                <span class="d-flex flex-column">
+                    <span class="app-brand-title">Attribute Authority</span>
+                    <span class="app-brand-subtitle">Identity attributes and delegated access</span>
                 </span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    {% if claims %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_nav == 'dashboard' %}active{% endif %}" href="/">Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_nav == 'attributes-self' %}active{% endif %}" href="/me/attributes">My Attributes</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_nav == 'users' %}active{% endif %}" href="/admin/users">Users</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_nav == 'attribute-definitions' %}active{% endif %}" href="/admin/attributes">Definitions</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_nav == 'privileges' %}active{% endif %}" href="/admin/privileges">Privileges</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_nav == 'invitations' %}active{% endif %}" href="/invitations/manage">Invitations</a>
-                    </li>
-                    {% endif %}
-                    <li class="nav-item">
-                        <a class="nav-link {% if active_nav == 'privacy' %}active{% endif %}" href="/privacy">Privacy</a>
-                    </li>
-                </ul>
-                <div class="d-flex align-items-center gap-2 ms-lg-3">
-                    <a class="btn btn-outline-secondary btn-sm d-none d-lg-inline-flex align-items-center gap-2" href="/docs">
-                        <i class="bi bi-file-earmark-code"></i>
-                        API Docs
-                    </a>
-                    {% if claims %}
-                    <div class="text-end small">
-                        <div class="fw-semibold">{{ claims.name or claims.email or 'Signed in' }}</div>
-                        <div class="text-body-secondary">{{ claims.email or claims.sub }}</div>
+
+            <div class="d-flex align-items-center gap-2 ms-auto order-xl-3">
+                {% if claims %}
+                {% set display_name = claims.name or claims.email or claims.sub or 'A' %}
+                {% set secondary_text = claims.email or claims.sub or 'Federated identity' %}
+                <div class="dropdown">
+                    <button
+                        class="btn app-account-toggle d-inline-flex align-items-center gap-2"
+                        type="button"
+                        id="accountMenuButton"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        aria-label="Open account menu"
+                    >
+                        <span class="app-account-avatar">{{ display_name[0]|upper }}</span>
+                        <span class="d-none d-xl-flex flex-column align-items-start text-start">
+                            <span class="app-account-name">{{ display_name }}</span>
+                            <span class="app-account-meta">{{ secondary_text }}</span>
+                        </span>
+                        <i class="bi bi-chevron-down small d-none d-xl-inline"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end app-dropdown-menu app-profile-menu p-0 overflow-hidden" aria-labelledby="accountMenuButton">
+                        <div class="app-profile-card">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="app-account-avatar app-account-avatar-lg">{{ display_name[0]|upper }}</span>
+                                <div class="min-w-0">
+                                    <div class="app-profile-name">{{ display_name }}</div>
+                                    <div class="app-profile-meta">{{ secondary_text }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-2">
+                            <div class="app-dropdown-heading pt-0 px-2">Appearance</div>
+                            <div class="app-theme-inline">
+                                <div class="app-theme-inline-copy">
+                                    <span class="app-menu-label">Theme</span>
+                                    <span class="app-menu-note" data-theme-summary>System</span>
+                                </div>
+                                <div class="app-theme-inline-actions">
+                                    <button class="btn app-theme-auto-btn" type="button" data-theme-system-button aria-pressed="false">
+                                        Auto
+                                    </button>
+                                    <button class="btn app-theme-toggle-btn" type="button" data-theme-toggle aria-pressed="false" aria-label="Toggle theme">
+                                        <i class="bi bi-circle-half" data-theme-toggle-icon></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dropdown-divider my-0"></div>
+                        <div class="p-2">
+                            <a class="dropdown-item app-menu-link" href="/">
+                                <span class="app-menu-icon"><i class="bi bi-grid"></i></span>
+                                <span class="app-menu-text">
+                                    <span class="app-menu-label">Dashboard</span>
+                                    <span class="app-menu-note">Return to the main overview.</span>
+                                </span>
+                            </a>
+                            <a class="dropdown-item app-menu-link" href="/me/attributes">
+                                <span class="app-menu-icon"><i class="bi bi-person-badge"></i></span>
+                                <span class="app-menu-text">
+                                    <span class="app-menu-label">My Attributes</span>
+                                    <span class="app-menu-note">Review your issued values and entitlements.</span>
+                                </span>
+                            </a>
+                            <a class="dropdown-item app-menu-link" href="/invitations/manage">
+                                <span class="app-menu-icon"><i class="bi bi-envelope-paper"></i></span>
+                                <span class="app-menu-text">
+                                    <span class="app-menu-label">Invitations</span>
+                                    <span class="app-menu-note">Create and manage invitation links.</span>
+                                </span>
+                            </a>
+                            <a class="dropdown-item app-menu-link" href="/privacy">
+                                <span class="app-menu-icon"><i class="bi bi-shield-check"></i></span>
+                                <span class="app-menu-text">
+                                    <span class="app-menu-label">Privacy</span>
+                                    <span class="app-menu-note">Review the privacy policy for this service.</span>
+                                </span>
+                            </a>
+                        </div>
+                        <div class="dropdown-divider my-0"></div>
+                        <div class="p-2">
+                            <a class="dropdown-item app-menu-link app-menu-link-danger" href="/logout">
+                                <span class="app-menu-icon"><i class="bi bi-box-arrow-right"></i></span>
+                                <span class="app-menu-text">
+                                    <span class="app-menu-label">Log Out</span>
+                                    <span class="app-menu-note">End the current browser session.</span>
+                                </span>
+                            </a>
+                        </div>
                     </div>
-                    <a class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2" href="/logout">
-                        <i class="bi bi-box-arrow-right"></i>
-                        Log Out
-                    </a>
-                    {% else %}
-                    <a class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2" href="/login">
-                        <i class="bi bi-box-arrow-in-right"></i>
-                        Log In
-                    </a>
-                    {% endif %}
                 </div>
+                {% else %}
+                <div class="dropdown">
+                    <button
+                        class="btn app-toolbar-btn d-inline-flex align-items-center gap-2"
+                        type="button"
+                        id="themeMenuButton"
+                        data-theme-button
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        aria-label="Select theme"
+                    >
+                        <i class="bi bi-circle-half" data-theme-icon></i>
+                        <span class="d-none d-lg-inline" data-theme-label>System</span>
+                        <i class="bi bi-chevron-down small"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end app-dropdown-menu p-2" aria-labelledby="themeMenuButton">
+                        <div class="app-dropdown-heading">Appearance</div>
+                        <button class="dropdown-item app-theme-option" type="button" data-theme-value="light" aria-pressed="false">
+                            <span class="app-menu-icon"><i class="bi bi-sun"></i></span>
+                            <span class="app-menu-text">
+                                <span class="app-menu-label">Light</span>
+                                <span class="app-menu-note">Always use the light palette.</span>
+                            </span>
+                            <i class="bi bi-check2 app-theme-check"></i>
+                        </button>
+                        <button class="dropdown-item app-theme-option" type="button" data-theme-value="dark" aria-pressed="false">
+                            <span class="app-menu-icon"><i class="bi bi-moon-stars"></i></span>
+                            <span class="app-menu-text">
+                                <span class="app-menu-label">Dark</span>
+                                <span class="app-menu-note">Always use the dark palette.</span>
+                            </span>
+                            <i class="bi bi-check2 app-theme-check"></i>
+                        </button>
+                        <button class="dropdown-item app-theme-option" type="button" data-theme-value="system" aria-pressed="false">
+                            <span class="app-menu-icon"><i class="bi bi-circle-half"></i></span>
+                            <span class="app-menu-text">
+                                <span class="app-menu-label">System</span>
+                                <span class="app-menu-note">Follow your device preference.</span>
+                            </span>
+                            <i class="bi bi-check2 app-theme-check"></i>
+                        </button>
+                    </div>
+                </div>
+                <a class="btn app-primary-btn d-inline-flex align-items-center gap-2" href="/login">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    <span class="d-none d-md-inline">Log In</span>
+                </a>
+                {% endif %}
+
+                <button class="navbar-toggler app-navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="bi bi-list fs-4"></i>
+                </button>
+            </div>
+
+            <div class="collapse navbar-collapse order-xl-2" id="navbarNav">
+                <ul class="navbar-nav app-nav-list mx-xl-auto mb-2 mb-xl-0 text-nowrap">
+                    {% if claims %}
+                    <li class="nav-item">
+                        <a class="nav-link app-nav-link {% if active_nav == 'dashboard' %}active{% endif %}" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link app-nav-link {% if active_nav == 'attributes-self' %}active{% endif %}" href="/me/attributes">My Attributes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link app-nav-link {% if active_nav == 'users' %}active{% endif %}" href="/admin/users">Users</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link app-nav-link {% if active_nav == 'attribute-definitions' %}active{% endif %}" href="/admin/attributes">Definitions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link app-nav-link {% if active_nav == 'privileges' %}active{% endif %}" href="/admin/privileges">Privileges</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link app-nav-link {% if active_nav == 'invitations' %}active{% endif %}" href="/invitations/manage">Invitations</a>
+                    </li>
+                    {% endif %}
+                </ul>
             </div>
         </div>
     </nav>
 
     <main class="container pb-5 flex-grow-1">
         {% if page_message %}
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success alert-dismissible fade show app-alert" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i>{{ page_message }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
         {% endif %}
         {% if page_error %}
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show app-alert" role="alert">
             <i class="bi bi-exclamation-octagon-fill me-2"></i>{{ page_error }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
@@ -107,6 +239,7 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="/static/js/theme-toggle.js"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

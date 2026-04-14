@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Attribute Authority{% endblock %}
+
+{% block content %}
+{% if claims %}
+<section class="hero-panel rounded-4 p-4 p-lg-5 surface-card mb-4">
+    <div class="row g-4 align-items-center">
+        <div class="col-lg-8">
+            <span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis border border-primary-subtle mb-3">Signed In</span>
+            <h1 class="display-6 fw-semibold card-title-tight mb-3">{{ claims.name or claims.email or claims.sub }}</h1>
+            <p class="lead text-body-secondary mb-0">
+                Use the Bootstrap-based pages below to inspect attributes, manage privileges, and work with invitation flows without dropping into raw API endpoints.
+            </p>
+        </div>
+        <div class="col-lg-4">
+            <div class="row g-3">
+                <div class="col-12 col-sm-4 col-lg-12">
+                    <div class="card surface-card h-100">
+                        <div class="card-body">
+                            <div class="text-body-secondary small text-uppercase fw-semibold mb-2">Attribute Values</div>
+                            <div class="display-6 fw-semibold mb-0">{{ stats.attribute_count if stats else 0 }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-4 col-lg-12">
+                    <div class="card surface-card h-100">
+                        <div class="card-body">
+                            <div class="text-body-secondary small text-uppercase fw-semibold mb-2">Attribute Groups</div>
+                            <div class="display-6 fw-semibold mb-0">{{ stats.group_count if stats else 0 }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-4 col-lg-12">
+                    <div class="card surface-card h-100">
+                        <div class="card-body">
+                            <div class="text-body-secondary small text-uppercase fw-semibold mb-2">Invitations</div>
+                            <div class="display-6 fw-semibold mb-0">{{ stats.invitation_count if stats else 0 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="row g-4">
+    {% for card in cards %}
+    <div class="col-md-6 col-xl-4">
+        <a href="{{ card.href }}" class="card surface-card h-100 text-decoration-none text-reset">
+            <div class="card-body p-4">
+                <span class="icon-circle d-inline-flex align-items-center justify-content-center rounded-3 bg-primary-subtle text-primary border border-primary-subtle mb-3">
+                    <i class="{{ card.icon }} fs-4"></i>
+                </span>
+                <h2 class="h5 fw-semibold mb-2">{{ card.title }}</h2>
+                <p class="text-body-secondary mb-0">{{ card.description }}</p>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</section>
+{% else %}
+<section class="hero-panel rounded-4 p-4 p-lg-5 surface-card min-vh-hero d-flex align-items-center">
+    <div class="row g-4 align-items-center w-100">
+        <div class="col-lg-7">
+            <span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis border border-primary-subtle mb-3">Attribute Authority</span>
+            <h1 class="display-5 fw-semibold card-title-tight mb-3">A Bootstrap-based control plane for identities, attributes, and delegated access.</h1>
+            <p class="lead text-body-secondary mb-4">
+                This interface follows the browser's light or dark theme, uses Bootstrap components end to end, and keeps the API under <code>/api/v1</code> while the UI lives on clean page routes.
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/docs" class="btn btn-outline-secondary btn-lg d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-code"></i>
+                    Open API Docs
+                </a>
+                <a href="/privacy" class="btn btn-outline-primary btn-lg d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-shield-check"></i>
+                    Review Privacy Policy
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card surface-card">
+                <div class="card-body p-4 p-lg-5">
+                    <h2 class="h4 fw-semibold mb-2">Log in to continue</h2>
+                    <p class="text-body-secondary mb-4">Choose one of the configured OpenID Connect providers to access the UI.</p>
+                    {% if provider_links %}
+                    <div class="d-grid gap-2">
+                        {% for provider in provider_links %}
+                        <a href="{{ provider.href }}" class="btn btn-primary btn-lg d-inline-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-box-arrow-in-right"></i>
+                            Continue with {{ provider.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning mb-0">
+                        No OIDC providers are configured. Set <code>OIDC_PROVIDERS</code> to enable login.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

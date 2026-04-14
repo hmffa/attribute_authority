@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..dependencies import require_privilege
 from ...db.session import get_async_db
 from ...models.privilege import PrivilegeAction
-from ...schemas.attribute import AttributeCreate, AttributeRead
+from ...schemas.attribute import AttributeCreate, AttributeRead, AttributeUpdate
 from ...services import attribute_definition as attributes
 
 router = APIRouter()
@@ -43,3 +43,25 @@ async def get_attribute_definition(
     if not attr:
         raise HTTPException(status_code=404, detail="Attribute definition not found")
     return attr
+
+
+@router.put("/definitions/{attribute_id}", response_model=AttributeRead)
+async def update_attribute_definition(
+    attribute_id: int,
+    obj_in: AttributeUpdate,
+    db: AsyncSession = Depends(get_async_db),
+    _=Depends(require_privilege(PrivilegeAction.UPDATE_ATTR)),
+):
+    """Update an existing attribute definition."""
+    return await attributes.update(db, attribute_id=attribute_id, attr_in=obj_in)
+
+
+@router.delete("/definitions/{attribute_id}")
+async def delete_attribute_definition(
+    attribute_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    _=Depends(require_privilege(PrivilegeAction.DELETE_ATTR)),
+):
+    """Delete an attribute definition."""
+    await attributes.delete(db, attribute_id=attribute_id)
+    return {"status": "success", "message": "Attribute definition deleted"}

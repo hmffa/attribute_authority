@@ -1,4 +1,6 @@
 """Privilege endpoints."""
+from typing import List
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,6 +12,25 @@ from ...schemas.privilege import PrivilegeCreate, PrivilegeDelegate, PrivilegeRe
 from ...services import privilege as privileges
 
 router = APIRouter()
+
+
+@router.get("/privileges", response_model=List[PrivilegeRead])
+async def list_privileges(
+    db: AsyncSession = Depends(get_async_db),
+    _=Depends(require_privilege(PrivilegeAction.ASSIGN_PRIVILEGE)),
+):
+    """List all privileges."""
+    return await privileges.get_all(db)
+
+
+@router.get("/privileges/{privilege_id}", response_model=PrivilegeRead)
+async def get_privilege(
+    privilege_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    _=Depends(require_privilege(PrivilegeAction.ASSIGN_PRIVILEGE)),
+):
+    """Get a single privilege."""
+    return await privileges.get_or_404(db, privilege_id)
 
 
 @router.post("/privileges", response_model=PrivilegeRead)
@@ -45,6 +66,17 @@ async def update_privilege(
         privilege_id=privilege_id,
         privilege_in=privilege_in
     )
+
+
+@router.delete("/privileges/{privilege_id}")
+async def delete_privilege(
+    privilege_id: int,
+    db: AsyncSession = Depends(get_async_db),
+    _=Depends(require_privilege(PrivilegeAction.ASSIGN_PRIVILEGE)),
+):
+    """Delete an existing privilege."""
+    await privileges.delete(db, privilege_id=privilege_id)
+    return {"status": "success", "message": "Privilege deleted"}
 
 
 @router.post("/privileges/delegate", response_model=PrivilegeRead)

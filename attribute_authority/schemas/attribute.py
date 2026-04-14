@@ -1,5 +1,6 @@
 from typing import Optional
-from pydantic import BaseModel
+
+from pydantic import BaseModel, ConfigDict
 
 class AttributeBase(BaseModel):
     name: str
@@ -9,7 +10,7 @@ class AttributeBase(BaseModel):
     enabled: bool = True
 
 class AttributeCreate(AttributeBase):
-    created_at: str # ISO timestamp
+    pass
 
 class AttributeUpdate(BaseModel):
     name: Optional[str] = None
@@ -21,7 +22,5 @@ class AttributeUpdate(BaseModel):
 class AttributeRead(AttributeBase):
     id: int
     created_at: str
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 

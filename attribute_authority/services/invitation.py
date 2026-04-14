@@ -28,8 +28,16 @@ async def get_by_hash(db: AsyncSession, invitation_hash: str) -> Optional[Invita
 async def list_by_creator(db: AsyncSession, creator_user_id: int) -> List[Invitation]:
     """List all invitations created by a user."""
     result = await db.execute(
-        select(Invitation).where(Invitation.created_by_user_id == creator_user_id)
+        select(Invitation)
+        .where(Invitation.created_by_user_id == creator_user_id)
+        .order_by(Invitation.created_at.desc())
     )
+    return result.scalars().all()
+
+
+async def get_all(db: AsyncSession) -> List[Invitation]:
+    """List all invitations."""
+    result = await db.execute(select(Invitation).order_by(Invitation.created_at.desc()))
     return result.scalars().all()
 
 
@@ -69,6 +77,14 @@ async def use_invitation_record(
     if invitation.current_uses >= invitation.max_uses:
         invitation.status = "used"
 
+    await db.commit()
+    await db.refresh(invitation)
+    return invitation
+
+
+async def revoke_invitation_record(db: AsyncSession, invitation: Invitation) -> Invitation:
+    """Mark an invitation as revoked."""
+    invitation.status = "revoked"
     await db.commit()
     await db.refresh(invitation)
     return invitation
@@ -115,7 +131,7 @@ async def create_invitation(
     # Create Invitation
     invitation = await create_invitation_record(db, invitation_in, user.id)
 
-    invitation_url = f"{settings.PUBLIC_BASE_URL}/api/v1/invitations/{invitation.hash}"
+    invitation_url = f"{settings.PUBLIC_BASE_URL}/invitations/{invitation.hash}"
 
     return InvitationResponse(
         hash=invitation.hash,
@@ -180,3 +196,19 @@ async def accept_invitation(
         "group_key": invitation.group_key,
         "group_value": invitation.group_value,
     }
+
+
+async def revoke_invitation(
+    db: AsyncSession,
+    invitation_hash: str,
+    actor_user_id: int,
+) -> Invitation:
+    """Revoke an invitation created by the requesting user."""
+    invitation = await get_by_hash(db, invitation_hash)
+    if not invitation:
+        raise HTTPException(status_code=404, detail="Invitation not found")
+    if invitation.created_by_user_id != actor_user_id:
+        raise HTTPException(status_code=403, detail="You cannot revoke this invitation")
+    if invitation.status == "revoked":
+        return invitation
+    return await revoke_invitation_record(db, invitation)

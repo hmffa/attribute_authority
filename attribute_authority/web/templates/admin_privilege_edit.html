@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Privilege — Attribute Authority{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+        <li class="breadcrumb-item"><a href="/admin/privileges" class="text-decoration-none">Privileges</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Privilege {{ privilege_entry.id }}</li>
+    </ol>
+</nav>
+
+<div class="row justify-content-center">
+    <div class="col-xl-8">
+        <div class="card surface-card overflow-hidden">
+            <div class="card-header bg-body py-3">
+                <h1 class="h4 mb-1">Edit Privilege</h1>
+                <p class="mb-0 small text-body-secondary">Update the scope, restrictions, and delegable state of this privilege.</p>
+            </div>
+            <div class="card-body p-4 p-lg-5">
+                <div class="alert alert-secondary mb-4">
+                    <div class="fw-semibold">Grantee</div>
+                    <div>{{ privilege_entry.grantee.name or privilege_entry.grantee.email or privilege_entry.grantee.sub }}</div>
+                    <div class="small text-body-secondary mono-break">{{ privilege_entry.grantee.sub }}</div>
+                </div>
+
+                <form action="/admin/privileges/{{ privilege_entry.id }}/edit" method="post" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="privilege-action" class="form-label">Action</label>
+                        <select id="privilege-action" name="action" class="form-select" required>
+                            {% for action in actions %}
+                            <option value="{{ action.value }}" {% if privilege_entry.action.value == action.value %}selected{% endif %}>{{ action.value }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="privilege-attribute" class="form-label">Attribute Scope</label>
+                        <select id="privilege-attribute" name="attribute_id" class="form-select">
+                            <option value="">All attributes</option>
+                            {% for attribute in attribute_options %}
+                            <option value="{{ attribute.id }}" {% if privilege_entry.attribute_id == attribute.id %}selected{% endif %}>{{ attribute.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label for="privilege-value" class="form-label">Value Restriction</label>
+                        <textarea id="privilege-value" name="value_restriction" class="form-control" rows="3">{{ privilege_entry.value_restriction or '' }}</textarea>
+                    </div>
+                    <div class="col-12">
+                        <label for="privilege-target" class="form-label">Target Restriction</label>
+                        <textarea id="privilege-target" name="target_restriction" class="form-control copy-field" rows="5">{{ privilege_entry.target_restriction|tojson(indent=2) if privilege_entry.target_restriction else '' }}</textarea>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input id="privilege-delegable" name="is_delegable" type="checkbox" class="form-check-input" {% if privilege_entry.is_delegable %}checked{% endif %}>
+                            <label class="form-check-label" for="privilege-delegable">Delegable</label>
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex flex-wrap gap-2 justify-content-end pt-3">
+                        <a href="/admin/privileges" class="btn btn-outline-secondary">Back</a>
+                        <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-save"></i>
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

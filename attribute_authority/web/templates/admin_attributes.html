@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Attribute Definitions — Attribute Authority{% endblock %}
+
+{% block content %}
+<section class="hero-panel rounded-4 p-4 p-lg-5 surface-card mb-4">
+    <span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis border border-primary-subtle mb-3">Schema Definitions</span>
+    <h1 class="display-6 fw-semibold card-title-tight mb-2">Manage attribute definitions.</h1>
+    <p class="text-body-secondary mb-0">Create and maintain the schema-level attributes that drive user values, invitations, and authorization scopes.</p>
+</section>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card surface-card h-100">
+            <div class="card-header bg-body py-3">
+                <h2 class="h5 mb-1">Create Definition</h2>
+                <p class="mb-0 small text-body-secondary">New definitions are created server-side and rendered back into this list.</p>
+            </div>
+            <div class="card-body">
+                <form action="/admin/attributes" method="post" class="d-grid gap-3">
+                    <div>
+                        <label for="attribute-name" class="form-label">Name</label>
+                        <input id="attribute-name" name="name" class="form-control" required>
+                    </div>
+                    <div>
+                        <label for="attribute-description" class="form-label">Description</label>
+                        <textarea id="attribute-description" name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div>
+                        <label for="attribute-value-restriction" class="form-label">Value Restriction</label>
+                        <textarea id="attribute-value-restriction" name="value_restriction" class="form-control" rows="3" placeholder="Optional regex restriction"></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input id="attribute-multivalue" name="is_multivalue" type="checkbox" class="form-check-input" checked>
+                        <label class="form-check-label" for="attribute-multivalue">Allow multiple values</label>
+                    </div>
+                    <div class="form-check">
+                        <input id="attribute-enabled" name="enabled" type="checkbox" class="form-check-input" checked>
+                        <label class="form-check-label" for="attribute-enabled">Enabled</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary d-inline-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-plus-circle"></i>
+                        Create Definition
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card surface-card overflow-hidden">
+            <div class="card-header bg-body py-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="h5 mb-1">Definitions</h2>
+                    <p class="mb-0 small text-body-secondary">{{ attribute_definitions|length }} definitions currently available.</p>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="px-4 py-3 border-0">Name</th>
+                                <th class="px-4 py-3 border-0">Description</th>
+                                <th class="px-4 py-3 border-0">Flags</th>
+                                <th class="px-4 py-3 border-0">Restriction</th>
+                                <th class="px-4 py-3 border-0 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attribute_definition in attribute_definitions %}
+                            <tr>
+                                <td class="px-4 py-3 fw-semibold">{{ attribute_definition.name }}</td>
+                                <td class="px-4 py-3 text-body-secondary">{{ attribute_definition.description or 'No description' }}</td>
+                                <td class="px-4 py-3">
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <span class="badge {% if attribute_definition.is_multivalue %}text-bg-primary{% else %}text-bg-secondary{% endif %}">
+                                            {{ 'Multi-value' if attribute_definition.is_multivalue else 'Single-value' }}
+                                        </span>
+                                        <span class="badge {% if attribute_definition.enabled %}text-bg-success{% else %}text-bg-secondary{% endif %}">
+                                            {{ 'Enabled' if attribute_definition.enabled else 'Disabled' }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    {% if attribute_definition.value_restriction %}
+                                    <code class="small mono-break">{{ attribute_definition.value_restriction }}</code>
+                                    {% else %}
+                                    <span class="text-body-secondary small">No restriction</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-end">
+                                    <div class="d-inline-flex gap-2">
+                                        <a href="/admin/attributes/{{ attribute_definition.id }}/edit" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-2">
+                                            <i class="bi bi-pencil-square"></i>
+                                            Edit
+                                        </a>
+                                        <form action="/admin/attributes/{{ attribute_definition.id }}/delete" method="post" onsubmit="return confirm('Delete this attribute definition?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-2">
+                                                <i class="bi bi-trash"></i>
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-body-secondary">
+                                    <i class="bi bi-diagram-3 fs-1 d-block mb-3 text-secondary"></i>
+                                    No attribute definitions exist yet.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

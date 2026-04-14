@@ -1,22 +1,23 @@
 {% extends "base.html" %}
 
-{% block title %}Logged Out - Attribute Authority Demo{% endblock %}
+{% block title %}Logged Out — Attribute Authority{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center mt-5">
     <div class="col-md-6 col-lg-5">
-        <div class="card border-success shadow-sm text-center">
-            <div class="card-header bg-success text-white py-3">
-                <h4 class="mb-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-check-circle-fill me-2" viewBox="0 0 16 16">
-                      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-                    </svg>
+        <div class="card surface-card border-success-subtle overflow-hidden text-center">
+            <div class="card-header bg-success-subtle text-success-emphasis py-3">
+                <h1 class="h4 mb-0 d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-check-circle-fill"></i>
                     Logout Successful
-                </h4>
+                </h1>
             </div>
             <div class="card-body p-5">
-                <p class="card-text text-muted mb-4">You have been successfully logged out.</p>
-                <a href="/api/v1/user/myattributes" class="btn btn-primary btn-lg w-100">Return to Home</a>
+                <p class="card-text text-body-secondary mb-4">Your session has been cleared. You can sign in again at any time using one of the configured OIDC providers.</p>
+                <div class="d-grid gap-2">
+                    <a href="/" class="btn btn-primary btn-lg">Return to Dashboard</a>
+                    <a href="/login" class="btn btn-outline-secondary btn-lg">Sign In Again</a>
+                </div>
             </div>
         </div>
     </div>

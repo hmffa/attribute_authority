@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Accept Invitation — Attribute Authority{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 55vh;">
+    <div class="col-md-8 col-lg-5">
+        <div class="card border-0 shadow-lg text-center">
+            <div class="card-body p-5">
+                <div class="mb-4">
+                    <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10" style="width:72px;height:72px;">
+                        <i class="bi bi-envelope-check-fill fs-1 text-primary"></i>
+                    </span>
+                </div>
+
+                <h1 class="h3 fw-bold mb-2">Join Group</h1>
+                <p class="text-body-secondary mb-1">You've been invited to join:</p>
+                <h2 class="h4 text-primary fw-bold mb-4">{{ invitation.group_value }}</h2>
+
+                <hr class="my-4 border-secondary border-opacity-25">
+
+                <p class="text-body-secondary mb-4">Would you like to accept this invitation?</p>
+
+                <form action="/invitations/{{ invitation_hash }}/confirm" method="post">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <button type="submit" name="action" value="accept"
+                                class="btn btn-success btn-lg flex-grow-1 d-flex align-items-center justify-content-center gap-2"
+                                id="btn-accept">
+                            <i class="bi bi-check-circle"></i>Accept
+                        </button>
+                        <button type="submit" name="action" value="reject"
+                                class="btn btn-outline-danger btn-lg flex-grow-1 d-flex align-items-center justify-content-center gap-2"
+                                id="btn-reject">
+                            <i class="bi bi-x-circle"></i>Reject
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

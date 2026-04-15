@@ -15,6 +15,47 @@ from ..services import user as users
 from ..services import attribute_definition as attributes
 
 
+def _claim_text(claims: Optional[Dict[str, Any]], *keys: str) -> Optional[str]:
+    if not claims:
+        return None
+    for key in keys:
+        value = claims.get(key)
+        if isinstance(value, str):
+            value = value.strip()
+            if value:
+                return value
+    return None
+
+
+async def _merge_user_profile_claims(
+    db: AsyncSession,
+    claims: Optional[Dict[str, Any]],
+) -> Optional[Dict[str, Any]]:
+    if not claims:
+        return None
+
+    has_name = _claim_text(claims, "name", "preferred_username") is not None
+    has_email = _claim_text(claims, "email") is not None
+    if has_name and has_email:
+        return claims
+
+    sub = claims.get("sub")
+    iss = claims.get("iss")
+    if not sub or not iss:
+        return claims
+
+    user = await users.get_by_sub_and_iss(db, sub, iss)
+    if not user:
+        return claims
+
+    merged_claims = dict(claims)
+    if not has_name and user.name:
+        merged_claims["name"] = user.name
+    if not has_email and user.email:
+        merged_claims["email"] = user.email
+    return merged_claims
+
+
 async def get_current_user_claims(request: Request) -> Dict[str, Any]:
     """Extract and validate claims from the request token."""
     return await validate_token(request)
@@ -81,7 +122,10 @@ def require_privilege(action: PrivilegeAction):
     return dependency
 
 
-async def optional_user_claims(request: Request) -> Optional[Dict[str, Any]]:
+async def optional_user_claims(
+    request: Request,
+    db: AsyncSession = Depends(get_async_db),
+) -> Optional[Dict[str, Any]]:
     """
     Try to validate token but don't raise exception if not present.
     Uses cookie-stored id_token first (set during login callback).
@@ -91,9 +135,13 @@ async def optional_user_claims(request: Request) -> Optional[Dict[str, Any]]:
         token_info = access_tokens.get_access_token_info(
             id_token, verify=settings.ENVIRONMENT == "production"
         )
-        return token_info.body
+        body = getattr(token_info, "body", None)
+        if isinstance(body, dict):
+            return await _merge_user_profile_claims(db, body)
+        return None
     try:
-        return await validate_token(request)
+        claims = await validate_token(request)
     except HTTPException:
         return None
+    return await _merge_user_profile_claims(db, claims)
 

@@ -73,8 +73,10 @@ app.add_middleware(LoggingMiddleware)
 
 app.add_middleware(
     SessionMiddleware,
-    secret_key=settings.SECRET_KEY,  
-    max_age=3600,             # 1 hour session duration
+    secret_key=settings.SECRET_KEY,
+    same_site="lax",
+    https_only=settings.ENVIRONMENT == "production",
+    max_age=3600,
 )
 
 # Include API router

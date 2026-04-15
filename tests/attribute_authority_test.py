@@ -1,7 +1,9 @@
+import asyncio
 from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
+from starlette.requests import Request
 
 from attribute_authority.api.dependencies import optional_user_claims
 from attribute_authority.db.session import get_async_db
@@ -21,7 +23,7 @@ def client():
 
 
 def test_openapi_keeps_json_api_and_excludes_ui_routes(client):
-	response = client.get("/api/v1/openapi.json")
+	response = client.get("/openapi.json")
 
 	assert response.status_code == 200
 	paths = response.json()["paths"]
@@ -46,6 +48,203 @@ def test_login_page_renders_provider_links(client, monkeypatch):
 	assert response.status_code == 200
 	assert "Continue with demo-op" in response.text
 	assert "/auth/authorize/demo-op?next=%2Fadmin%2Fusers" in response.text
+
+
+def test_oidc_callback_uses_access_token_and_userinfo_profile_fallbacks(client, monkeypatch):
+	class _CallbackClient:
+		async def authorize_access_token(self, _request):
+			return {
+				"id_token": "id-token",
+				"access_token": "access-token",
+			}
+
+		async def userinfo(self, **kwargs):
+			assert kwargs["token"]["access_token"] == "access-token"
+			return {"preferred_username": "Taylor Example"}
+
+	async def _get_or_create(_db, sub, iss):
+		assert sub == "subject-1"
+		assert iss == "issuer-1"
+		return SimpleNamespace(id=1, sub=sub, iss=iss, name=None, email=None)
+
+	updated_profiles = []
+
+	async def _update(_db, user, user_in):
+		updated_profiles.append(user_in)
+		return user
+
+	def _get_access_token_info(token, verify=True):
+		assert verify is False
+		if token == "id-token":
+			return SimpleNamespace(body={"sub": "subject-1", "iss": "issuer-1"})
+		if token == "access-token":
+			return SimpleNamespace(body={"email": "taylor@example.org"})
+		return None
+
+	app.dependency_overrides[get_async_db] = _override_db
+	monkeypatch.setattr(
+		"attribute_authority.web.routes.oauth.create_client",
+		lambda _provider: _CallbackClient(),
+	)
+	monkeypatch.setattr(
+		"attribute_authority.web.routes.access_tokens.get_access_token_info",
+		_get_access_token_info,
+	)
+	monkeypatch.setattr(
+		"attribute_authority.web.routes.users.get_or_create",
+		_get_or_create,
+	)
+	monkeypatch.setattr(
+		"attribute_authority.web.routes.users.update",
+		_update,
+	)
+
+	response = client.get("/auth/callback/demo-op", follow_redirects=False)
+
+	assert response.status_code == 302
+	assert response.headers["location"] == "/"
+	assert len(updated_profiles) == 1
+	assert updated_profiles[0].name == "Taylor Example"
+	assert updated_profiles[0].email == "taylor@example.org"
+
+
+def test_oidc_callback_keeps_null_profile_when_all_claim_sources_are_empty(client, monkeypatch):
+	class _CallbackClient:
+		async def authorize_access_token(self, _request):
+			return {
+				"id_token": "id-token",
+				"access_token": "access-token",
+			}
+
+		async def userinfo(self, **_kwargs):
+			return {}
+
+	async def _get_or_create(_db, sub, iss):
+		assert sub == "subject-2"
+		assert iss == "issuer-2"
+		return SimpleNamespace(id=2, sub=sub, iss=iss, name=None, email=None)
+
+	update_called = False
+
+	async def _update(_db, user, user_in):
+		nonlocal update_called
+		update_called = True
+		return user
+
+	def _get_access_token_info(token, verify=True):
+		assert verify is False
+		if token == "id-token":
+			return SimpleNamespace(body={"sub": "subject-2", "iss": "issuer-2"})
+		if token == "access-token":
+			return SimpleNamespace(body={})
+		return None
+
+	app.dependency_overrides[get_async_db] = _override_db
+	monkeypatch.setattr(
+		"attribute_authority.web.routes.oauth.create_client",
+		lambda _provider: _CallbackClient(),
+	)
+	monkeypatch.setattr(
+		"attribute_authority.web.routes.access_tokens.get_access_token_info",
+		_get_access_token_info,
+	)
+	monkeypatch.setattr(
+		"attribute_authority.web.routes.users.get_or_create",
+		_get_or_create,
+	)
+	monkeypatch.setattr(
+		"attribute_authority.web.routes.users.update",
+		_update,
+	)
+
+	response = client.get("/auth/callback/demo-op", follow_redirects=False)
+
+	assert response.status_code == 302
+	assert response.headers["location"] == "/"
+	assert update_called is False
+
+
+def test_optional_user_claims_backfills_profile_from_db(monkeypatch):
+	async def _get_user_by_claims(_db, sub, iss):
+		assert sub == "subject-3"
+		assert iss == "issuer-3"
+		return SimpleNamespace(name="Taylor Example", email="taylor@example.org")
+
+	def _get_access_token_info(token, verify=True):
+		assert token == "id-token"
+		assert verify is True
+		return SimpleNamespace(body={"sub": "subject-3", "iss": "issuer-3"})
+
+	monkeypatch.setattr(
+		"attribute_authority.api.dependencies.access_tokens.get_access_token_info",
+		_get_access_token_info,
+	)
+	monkeypatch.setattr(
+		"attribute_authority.api.dependencies.users.get_by_sub_and_iss",
+		_get_user_by_claims,
+	)
+
+	request = Request(
+		{
+			"type": "http",
+			"headers": [],
+			"session": {"id_token": "id-token"},
+		}
+	)
+
+	claims = asyncio.run(optional_user_claims(request, db=object()))
+
+	assert claims == {
+		"sub": "subject-3",
+		"iss": "issuer-3",
+		"name": "Taylor Example",
+		"email": "taylor@example.org",
+	}
+
+
+def test_optional_user_claims_preserves_token_profile_over_db(monkeypatch):
+	async def _get_user_by_claims(_db, sub, iss):
+		assert sub == "subject-4"
+		assert iss == "issuer-4"
+		return SimpleNamespace(name="Database Name", email="database@example.org")
+
+	def _get_access_token_info(token, verify=True):
+		assert token == "id-token"
+		assert verify is True
+		return SimpleNamespace(
+			body={
+				"sub": "subject-4",
+				"iss": "issuer-4",
+				"name": "Token Name",
+				"email": "token@example.org",
+			}
+		)
+
+	monkeypatch.setattr(
+		"attribute_authority.api.dependencies.access_tokens.get_access_token_info",
+		_get_access_token_info,
+	)
+	monkeypatch.setattr(
+		"attribute_authority.api.dependencies.users.get_by_sub_and_iss",
+		_get_user_by_claims,
+	)
+
+	request = Request(
+		{
+			"type": "http",
+			"headers": [],
+			"session": {"id_token": "id-token"},
+		}
+	)
+
+	claims = asyncio.run(optional_user_claims(request, db=object()))
+
+	assert claims == {
+		"sub": "subject-4",
+		"iss": "issuer-4",
+		"name": "Token Name",
+		"email": "token@example.org",
+	}
 
 
 def test_my_attributes_redirects_when_logged_out(client):

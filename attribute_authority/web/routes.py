@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..api.dependencies import optional_user_claims
 from ..core.config import settings
 from ..core.logging_config import logger
+from ..core.security import flaat
 from ..db.session import get_async_db
 from ..models.privilege import PrivilegeAction
 from ..models.user import User
@@ -69,6 +70,57 @@ def _display_claims(claims: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]
         "name": claims.get("name") or claims.get("preferred_username"),
         "email": claims.get("email"),
     }
+
+
+def _claim_text(claims: Optional[Dict[str, Any]], *keys: str) -> Optional[str]:
+    if not claims:
+        return None
+    for key in keys:
+        value = claims.get(key)
+        if isinstance(value, str):
+            value = value.strip()
+            if value:
+                return value
+    return None
+
+
+def _token_claims(token: Optional[str]) -> Dict[str, Any]:
+    if not token:
+        return {}
+    token_info = access_tokens.get_access_token_info(token, verify=False) # TODO Access token verification disabled for now
+    body = getattr(token_info, "body", None)
+    if isinstance(body, dict):
+        return body
+    return {}
+
+
+async def _userinfo_claims(client: Any, token_response: Dict[str, Any]) -> Dict[str, Any]:
+    if not token_response.get("access_token"):
+        return {}
+    try:
+        userinfo = await client.userinfo(token=token_response)
+    except Exception as exc:  # pragma: no cover - best effort fallback
+        logger.warning("Could not fetch user info during login: %s", exc)
+        return {}
+
+    if hasattr(userinfo, "items"):
+        return dict(userinfo.items())
+    return {}
+
+
+def _resolve_profile_claims(
+    *claim_sets: Optional[Dict[str, Any]],
+) -> tuple[Optional[str], Optional[str]]:
+    name = None
+    email = None
+    for claim_set in claim_sets:
+        if name is None:
+            name = _claim_text(claim_set, "name", "preferred_username")
+        if email is None:
+            email = _claim_text(claim_set, "email")
+        if name is not None and email is not None:
+            break
+    return name, email
 
 
 def _provider_links(next_url: str) -> list[dict[str, str]]:
@@ -420,9 +472,9 @@ async def oidc_callback(
                 status_code=400,
             )
 
-        claims = access_tokens.get_access_token_info(id_token, verify=False).body
-        sub = claims.get("sub")
-        iss = claims.get("iss")
+        id_token_claims = _token_claims(id_token)
+        sub = id_token_claims.get("sub")
+        iss = id_token_claims.get("iss")
         if not sub or not iss:
             logger.error("Missing required claims in token")
             return templates.TemplateResponse(
@@ -436,9 +488,19 @@ async def oidc_callback(
             )
 
         user = await users.get_or_create(db, sub=sub, iss=iss)
+        access_token_claims = _token_claims(token_response.get("access_token"))
+        profile_name, profile_email = _resolve_profile_claims(id_token_claims, access_token_claims)
+        if profile_name is None or profile_email is None:
+            userinfo_claims = await _userinfo_claims(client, token_response)
+            profile_name, profile_email = _resolve_profile_claims(
+                id_token_claims,
+                access_token_claims,
+                userinfo_claims,
+            )
+
         profile_update = UserUpdate(
-            name=claims.get("name") or claims.get("preferred_username"),
-            email=claims.get("email"),
+            name=profile_name,
+            email=profile_email,
         )
         if profile_update.name or profile_update.email:
             user = await users.update(db, user, profile_update)
